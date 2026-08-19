@@ -1,0 +1,7 @@
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@agentduel/battles-new@0.1.0'
+  - '@agentduel/capturetheflag@0.1.1'
+  - '@agentduel/deathmode@0.1.1'
+  - '@agentduel/replay-player@0.1.0'

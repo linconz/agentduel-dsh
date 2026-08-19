@@ -41,6 +41,9 @@ build/Release
 node_modules/
 jspm_packages/
 
+# Compiled plugin artifacts
+lib/
+
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 
@@ -141,3 +144,5 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+.DS_Store

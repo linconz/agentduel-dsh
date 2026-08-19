@@ -1,0 +1,80 @@
+{
+  "name": "agentduel-dsh",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AgentDuel plugin for DeepSeek Harness",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/client.js.map",
+    "lib/types/**/*.d.ts"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "pnpm run build:types && tsdown",
+    "build:types": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "watch": "tsdown --watch",
+    "prepare": "pnpm run build"
+  },
+  "dependencies": {
+    "@agentduel/battles-new": "^0.1.0",
+    "@agentduel/capturetheflag": "0.1.1",
+    "@agentduel/deathmode": "^0.1.1",
+    "@agentduel/replay-player": "^0.1.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-client-connection": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-client-runtime": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-client-ui-layout": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-client-ui-sidebar": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-client-ui-slots": "0.1.0-rc.7",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/dsh-client-connection": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-client-runtime": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-client-ui-layout": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-client-ui-sidebar": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-client-ui-slots": "0.1.0-rc.7",
+    "@tsdown/css": "0.22.14",
+    "@types/react": "~18.3.1",
+    "react": "18.3.1",
+    "tsdown": "0.22.14",
+    "typescript": "~5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "packageManager": "pnpm@11.7.0"
+}
