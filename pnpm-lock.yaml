@@ -12,17 +12,17 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
       '@agentduel/capturetheflag':
-        specifier: ^0.1.6
-        version: 0.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+        specifier: ^0.1.10
+        version: 0.1.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
       '@agentduel/component':
         specifier: ^0.1.7
         version: 0.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@agentduel/deathmode':
-        specifier: ^0.1.6
-        version: 0.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+        specifier: ^0.1.10
+        version: 0.1.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
       '@agentduel/replay-player':
-        specifier: ^0.1.4
-        version: 0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+        specifier: ^0.1.5
+        version: 0.1.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.1
@@ -73,8 +73,8 @@ packages:
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
 
-  '@agentduel/capturetheflag@0.1.6':
-    resolution: {integrity: sha512-3/Xzij5EQ01vi/jTfhDFYf59oI8wrbxfUYfi9kXARmen6IEOcI2WXX3Cw5PMIcRQe71ehHHo/xrfX6Xa4ZF0ww==}
+  '@agentduel/capturetheflag@0.1.10':
+    resolution: {integrity: sha512-0VQoAwwF/csRQZNuPQzfDftZ5sJLx60wS2M5l1vHjBJRFxs1z3/xjape+VYnBDDrBCz5SoZk9NlhA2FVls2tCg==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       react: '>=18.2.0'
@@ -87,15 +87,15 @@ packages:
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
 
-  '@agentduel/deathmode@0.1.6':
-    resolution: {integrity: sha512-jTtpIIoU5hLnIzsbjCFNbd/G+AbJ9cy8vVNNxD7UeJplnONOVLqRlJ3H5qh3pGHqP1kiDoLD/x2CfXOKOqnmTw==}
+  '@agentduel/deathmode@0.1.10':
+    resolution: {integrity: sha512-/jgzcRnT9X0nJ3uXJX5neb1YYkIJdWPenUOV4MND7ubYlKb8s1OaMQzT27JCtOUoiPF0yMPBRcthPUni9In21g==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
 
-  '@agentduel/replay-player@0.1.4':
-    resolution: {integrity: sha512-4cHmtu/B0VrI1hicm22fwdukgNNeBfqrVK2g1aPWRY4cmV/fNqT62WtcDErMbBsYuu/9ONCGtaLPhvkUd+kM1w==}
+  '@agentduel/replay-player@0.1.5':
+    resolution: {integrity: sha512-cQdwv8MkkE2xzSCQjnDtMv7KiBaqnR1dt7VoSBKIt7F/jLS5v1NNSHl2AWy1H2kzVxGWGlqSTIHysLV5qMAKfQ==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       react: '>=18.2.0'
@@ -2214,7 +2214,7 @@ snapshots:
       - react-native
       - typescript
 
-  '@agentduel/capturetheflag@0.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
+  '@agentduel/capturetheflag@0.1.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
     dependencies:
       '@agentduel/component': 0.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       i18next: 26.3.6(typescript@5.9.3)
@@ -2233,7 +2233,7 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@agentduel/deathmode@0.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
+  '@agentduel/deathmode@0.1.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
     dependencies:
       '@agentduel/component': 0.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       i18next: 26.3.6(typescript@5.9.3)
@@ -2244,7 +2244,7 @@ snapshots:
       - react-native
       - typescript
 
-  '@agentduel/replay-player@0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
+  '@agentduel/replay-player@0.1.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
     dependencies:
       '@agentduel/component': 0.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       canvas-confetti: 1.9.4

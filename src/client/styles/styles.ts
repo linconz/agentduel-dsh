@@ -282,6 +282,7 @@ a.agentduel-conversation-battle-button:visited:hover {
   display: none;
 }
 
+.agentduel-module-host > .agentduel-replay-player .agentduel-replay-toolbar-action,
 .agentduel-module-host > .agentduel-replay-player .agentduel-spectate-next-button {
   width: 100%;
   min-height: 42px;
@@ -289,17 +290,23 @@ a.agentduel-conversation-battle-button:visited:hover {
   border: 1px solid #7a4b22;
   border-radius: 6px;
   background: #7a4b22;
-  color: #fff;
-  font: 700 14px/20px var(--duel-font-body, inherit);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
   cursor: pointer;
 }
 
+.agentduel-module-host > .agentduel-replay-player .agentduel-replay-toolbar-action:hover:not(:disabled),
+.agentduel-module-host > .agentduel-replay-player .agentduel-replay-toolbar-action:focus-visible,
 .agentduel-module-host > .agentduel-replay-player .agentduel-spectate-next-button:hover:not(:disabled),
 .agentduel-module-host > .agentduel-replay-player .agentduel-spectate-next-button:focus-visible {
   border-color: #69401d;
   background: #69401d;
 }
 
+.agentduel-module-host > .agentduel-replay-player .agentduel-replay-toolbar-action:disabled,
 .agentduel-module-host > .agentduel-replay-player .agentduel-spectate-next-button:disabled {
   cursor: not-allowed;
   opacity: .55;

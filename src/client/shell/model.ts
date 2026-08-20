@@ -2,7 +2,9 @@ import type { SessionFace } from '@deepseek-ai/dsh-client-runtime/client'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import { useSyncExternalStore } from 'react'
 import type { AgentConversationService } from '../conversations/service.js'
+import type { RecentBattlesCache } from '../battles/recent-battles-cache.js'
 import { readStoredAppKey, removeStoredAppKey, saveStoredAppKey } from '../settings/app-key.js'
+import type { OwnedEntitiesCache } from '../shared/owned-entities-cache.js'
 import { requiresAgentDuelAppKey, type AgentDuelRoute } from './routes.js'
 
 export interface AgentDuelSnapshot {
@@ -27,6 +29,8 @@ export interface AgentDuelModel {
 export interface AgentDuelInjected {
   model: AgentDuelModel
   conversations: AgentConversationService
+  ownedEntities: OwnedEntitiesCache
+  recentBattles: RecentBattlesCache
   getSession: (sessionId: SessionId) => SessionFace | undefined
 }
 

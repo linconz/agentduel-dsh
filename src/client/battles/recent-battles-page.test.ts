@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RequestScope } from '../shared/request-scope.js'
+import { createRecentBattlesCache } from './recent-battles-cache.js'
 import { createAccountBattlePageLoader } from './recent-battles-page.js'
 
 afterEach(() => {
@@ -21,7 +22,9 @@ describe('账户级最近战斗加载', () => {
     }))
     vi.stubGlobal('fetch', fetchMock)
     const scope = new RequestScope()
-    const load = createAccountBattlePageLoader('agent_TestKey1234567', mode, scope)
+    const recentBattles = createRecentBattlesCache()
+    recentBattles.setAppKey('agent_TestKey1234567')
+    const load = createAccountBattlePageLoader('agent_TestKey1234567', mode, scope, recentBattles)
     const query = {
       battleTypes: [],
       challengeRoles: [],
@@ -32,13 +35,14 @@ describe('账户级最近战斗加载', () => {
     const first = load(query)
     const second = load(query)
 
-    expect(second).toBe(first)
     await expect(Promise.all([first, second])).resolves.toHaveLength(2)
+    await load(query)
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       `https://api.agentduel.app/api/integrations/battles?limit=20&game_mode_id=${expectedMode}`
     )
     scope.dispose()
+    recentBattles.dispose()
   })
 
   it('不同游标和筛选条件分别发起请求', async () => {
@@ -51,7 +55,9 @@ describe('账户级最近战斗加载', () => {
     }))
     vi.stubGlobal('fetch', fetchMock)
     const scope = new RequestScope()
-    const load = createAccountBattlePageLoader('agent_TestKey1234567', 'deathmatch', scope)
+    const recentBattles = createRecentBattlesCache()
+    recentBattles.setAppKey('agent_TestKey1234567')
+    const load = createAccountBattlePageLoader('agent_TestKey1234567', 'deathmatch', scope, recentBattles)
 
     await Promise.all([
       load({ battleTypes: [], challengeRoles: [], results: [], cursor: 'page-2' }),
@@ -64,5 +70,6 @@ describe('账户级最近战斗加载', () => {
       'https://api.agentduel.app/api/integrations/battles?limit=20&battle_type=ranked&game_mode_id=deathmatch'
     ]))
     scope.dispose()
+    recentBattles.dispose()
   })
 })

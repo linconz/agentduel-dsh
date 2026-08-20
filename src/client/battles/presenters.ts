@@ -1,6 +1,7 @@
 import type { CaptureTheFlagBattle } from '@agentduel/capturetheflag/recent-battles'
 import type { DeathmatchBattle } from '@agentduel/deathmode/recent-battles'
-import type { Battle } from '../api/client.js'
+import { getBattleStartAgainHref, type BattleHrefSource } from '@agentduel/battles-new'
+import type { Battle, BattleParticipant } from '../api/client.js'
 import { routeHref } from '../shell/routes.js'
 
 export function toDeathmatchBattle(battle: Battle): DeathmatchBattle | null {
@@ -80,4 +81,31 @@ export function getRevengeHref(
     params.set('target_team_public_id', battle.revenge_target.public_id)
   }
   return routeHref({ kind: 'battle-new', search: params.toString() })
+}
+
+export function getStartAgainSearch(
+  battle: BattleHrefSource,
+  ownPublicId: string | null
+): string | null {
+  if (!ownPublicId) return null
+  const href = getBattleStartAgainHref(battle, new Set([ownPublicId]))
+  if (!href) return null
+  const questionMarkIndex = href.indexOf('?')
+  return questionMarkIndex < 0 ? '' : href.slice(questionMarkIndex + 1)
+}
+
+export function getReplayParticipantDetailHref(
+  participant: Pick<BattleParticipant, 'kind' | 'public_id'>,
+  view: 'owned' | 'public'
+): string {
+  if (participant.kind === 'character') {
+    return routeHref({
+      kind: view === 'owned' ? 'character-detail' : 'character-public-detail',
+      publicId: participant.public_id
+    })
+  }
+  return routeHref({
+    kind: view === 'owned' ? 'team-detail' : 'team-public-detail',
+    publicId: participant.public_id
+  })
 }

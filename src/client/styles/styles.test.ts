@@ -47,12 +47,18 @@ describe('插件页面样式', () => {
 
   it('回放主栏使用播放器工具插槽承载代码优化区域', () => {
     expect(styles).toContain('.replay-participant-tools > .agentduel-character-agent-optimization')
+    expect(styles).toContain('.agentduel-replay-toolbar-action')
     expect(styles).toContain('@container agentduel-replay (max-width: 820px)')
     expect(styles).toContain('.replay-participant-tools .agentduel-character-agent-form')
   })
 
   it('观战回放提供切换下一场的播放器工具按钮', () => {
     expect(styles).toContain('.agentduel-spectate-next-button')
+    expect(styles).toContain('color: #ffffff')
+    expect(styles).toContain('font-family: inherit')
+    expect(styles).toContain('font-size: 14px')
+    expect(styles).toContain('font-weight: 700')
+    expect(styles).toContain('line-height: 20px')
   })
 
   it('代码优化列表为每条记录提供独立删除操作', () => {

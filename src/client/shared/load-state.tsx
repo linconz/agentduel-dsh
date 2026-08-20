@@ -9,13 +9,14 @@ export type LoadState<T> =
 
 export function useLoadState<T>(
   loader: (signal: AbortSignal) => Promise<T>,
-  dependencies: readonly unknown[]
+  dependencies: readonly unknown[],
+  getCachedValue?: () => T | null
 ): [LoadState<T>, () => void] {
   const [reloadKey, setReloadKey] = useState(0)
-  const [state, setState] = useState<LoadState<T>>({ status: 'loading', value: null, error: null })
+  const [state, setState] = useState<LoadState<T>>(() => loadStateFromCache(getCachedValue))
   useEffect(() => {
     const controller = new AbortController()
-    setState({ status: 'loading', value: null, error: null })
+    setState(loadStateFromCache(getCachedValue))
     void loader(controller.signal).then(
       (value) => { if (!controller.signal.aborted) setState({ status: 'ready', value, error: null }) },
       (error: unknown) => { if (!controller.signal.aborted) setState({ status: 'error', value: null, error }) }
@@ -25,6 +26,13 @@ export function useLoadState<T>(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...dependencies, reloadKey])
   return [state, () => setReloadKey((value) => value + 1)]
+}
+
+function loadStateFromCache<T>(getCachedValue?: () => T | null): LoadState<T> {
+  const value = getCachedValue?.() ?? null
+  return value === null
+    ? { status: 'loading', value: null, error: null }
+    : { status: 'ready', value, error: null }
 }
 
 export function ModuleLoadState<T>({

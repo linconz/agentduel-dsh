@@ -1,5 +1,6 @@
 import { AgentDuelReplayPlayer, UnsupportedReplayVersionError } from '@agentduel/replay-player'
 import type { NormalizedReplayResult } from '@agentduel/replay-player'
+import { AgentDuelBreadcrumbs } from '@agentduel/component'
 import { useEffect, useState } from 'react'
 import {
   AgentDuelIntegrationError,
@@ -11,6 +12,9 @@ import {
   type Battle,
   type RecentRankedReplayBattle
 } from '../api/client.js'
+import { getReplayParticipantDetailHref } from '../battles/presenters.js'
+import { useModuleLink } from '../shared/module-link.js'
+import type { AgentDuelPageNavigation } from '../shell/routes.js'
 
 type SpectateState =
   | { status: 'loading-list' | 'loading-replay' }
@@ -18,7 +22,8 @@ type SpectateState =
   | { status: 'ready'; battle: Battle; replay: NormalizedReplayResult; terrainRows: readonly string[] }
   | { status: 'error'; message: string }
 
-export function SpectatePage(): React.JSX.Element {
+export function SpectatePage({ navigation }: { navigation: AgentDuelPageNavigation }): React.JSX.Element {
+  const Link = useModuleLink(navigation)
   const [recentBattles, setRecentBattles] = useState<readonly RecentRankedReplayBattle[] | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [reloadKey, setReloadKey] = useState(0)
@@ -79,9 +84,17 @@ export function SpectatePage(): React.JSX.Element {
       <AgentDuelReplayPlayer
         key={state.battle.public_id}
         battle={state.battle}
+        breadcrumbNavigation={(
+          <AgentDuelBreadcrumbs
+            ariaLabel="公开观战导航"
+            items={[{ label: '公开观战' }]}
+          />
+        )}
+        getParticipantHref={getReplayParticipantDetailHref}
         i18nMode="bundled"
         locale="zh-CN"
         ownParticipantPublicId={null}
+        participantLinkComponent={Link}
         replayResult={state.replay}
         terrainRows={state.terrainRows}
         replayToolbar={(
@@ -95,7 +108,7 @@ export function SpectatePage(): React.JSX.Element {
                 : (index + 1) % recentBattles.length
             ))}
           >
-            换一场战斗
+            另一场战斗
           </button>
         )}
       />

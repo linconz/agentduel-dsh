@@ -14,6 +14,8 @@ type AgentDuelPageProps = PropsRuntime<'conversation'> & AgentDuelInjected
 export function AgentDuelPage({
   model,
   conversations,
+  ownedEntities,
+  recentBattles,
   useSessions,
   useWorkspaces
 }: AgentDuelPageProps): React.JSX.Element | null {
@@ -40,7 +42,7 @@ export function AgentDuelPage({
         />
       ) : snapshot.route.kind === 'spectate' ? (
         <div className="agentduel-module-host">
-          <SpectatePage />
+          <SpectatePage navigation={navigation} />
         </div>
       ) : snapshot.route.kind === 'app-key' || snapshot.appKey === null ? (
         <AppKeyPage appKey={snapshot.appKey} model={model} runTurnstile={runTurnstile} />
@@ -49,6 +51,8 @@ export function AgentDuelPage({
           appKey={snapshot.appKey}
           conversations={conversations}
           navigation={navigation}
+          ownedEntities={ownedEntities}
+          recentBattles={recentBattles}
           route={snapshot.route}
           runTurnstile={runTurnstile}
           useSessions={useSessions}

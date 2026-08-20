@@ -13,11 +13,9 @@ import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import {
   WEBSITE_BASE_URL,
-  fetchCharacters,
   fetchMaps,
   fetchPublicCharacterVersion,
   fetchPublicTeamVersion,
-  fetchTeams,
   isInvalidAppKey,
   searchBattleTargets,
   startBattle,
@@ -26,20 +24,31 @@ import {
   type Team
 } from '../api/client.js'
 import { useModuleLink } from '../shared/module-link.js'
-import type { WritePageProps } from '../shared/page-types.js'
+import type { OwnedEntitiesWritePageProps } from '../shared/page-types.js'
 import { rankedResults } from '../shared/ranked-results.js'
 import { useRequestScope, withTurnstile } from '../shared/request-scope.js'
 import { routeHref } from '../shell/routes.js'
 import { toBattlesNewError } from './errors.js'
+import { clearRecentBattlesAfterSuccess, type RecentBattlesCache } from './recent-battles-cache.js'
 
-export function BattleNewPage({ appKey, navigation, runTurnstile, search }: WritePageProps & { search: string }): React.JSX.Element {
+export function BattleNewPage({
+  appKey,
+  navigation,
+  ownedEntities,
+  recentBattles,
+  runTurnstile,
+  search
+}: OwnedEntitiesWritePageProps & { recentBattles: RecentBattlesCache; search: string }): React.JSX.Element {
   const scope = useRequestScope()
   const Link = useModuleLink(navigation)
   const dataSource = useMemo<BattlesNewDataSource>(() => ({
     async loadParticipants() {
       try {
         return await scope.run(async (signal) => {
-          const [characters, teams] = await Promise.all([fetchCharacters(appKey, signal), fetchTeams(appKey, signal)])
+          const [characters, teams] = await Promise.all([
+            ownedEntities.getCharacters(appKey, signal),
+            ownedEntities.getTeams(appKey, signal)
+          ])
           return {
             characters: await Promise.all(characters.map(async (character) => ({
               public_id: character.public_id,
@@ -82,19 +91,21 @@ export function BattleNewPage({ appKey, navigation, runTurnstile, search }: Writ
             targetPublicId = targets.find((target) => target.name.trim() === targetName)?.public_id ?? null
             if (!targetPublicId) throw new BattlesNewApiError(404, 'BATTLE_START_TARGET_NOT_FOUND')
           }
-          const battle = await withTurnstile(runTurnstile, signal, async (token) => await startBattle(appKey, {
-            mode: selection.mode,
-            battleType: selection.battleType,
-            challengerPublicId: selection.challengerPublicId,
-            targetPublicId,
-            revengeOfBattlePublicId: selection.revengeOfBattlePublicId,
-            mapId: selection.mapId
-          }, token, signal))
+          const battle = await clearRecentBattlesAfterSuccess(recentBattles, appKey, async () => (
+            await withTurnstile(runTurnstile, signal, async (token) => await startBattle(appKey, {
+              mode: selection.mode,
+              battleType: selection.battleType,
+              challengerPublicId: selection.challengerPublicId,
+              targetPublicId,
+              revengeOfBattlePublicId: selection.revengeOfBattlePublicId,
+              mapId: selection.mapId
+            }, token, signal))
+          ))
           return { public_id: battle.public_id }
         })
       } catch (error) { throw toBattlesNewError(error) }
     }
-  }), [appKey, runTurnstile, scope])
+  }), [appKey, ownedEntities, recentBattles, runTurnstile, scope])
 
   return (
     <AgentDuelBattlesNew

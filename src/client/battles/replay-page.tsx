@@ -3,6 +3,7 @@ import {
   UnsupportedReplayVersionError,
   type NormalizedReplayResult
 } from '@agentduel/replay-player'
+import { AgentDuelBreadcrumbs } from '@agentduel/component'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { useEffect, useState } from 'react'
@@ -10,35 +11,42 @@ import {
   AgentDuelIntegrationError,
   abortableDelay,
   fetchBattleDetails,
-  fetchCharacters,
   fetchReplayResult,
-  fetchTeams,
   isInvalidAppKey,
   normalizeBattleSharePath,
   type Battle
 } from '../api/client.js'
 import { AgentCodeOptimization } from '../conversations/code-optimization.js'
 import type { AgentConversationService } from '../conversations/service.js'
-import type { BasicPageProps } from '../shared/page-types.js'
+import { useModuleLink } from '../shared/module-link.js'
+import type { OwnedEntitiesPageProps } from '../shared/page-types.js'
+import { refreshOwnedEntitiesAfterCompletedBattle } from '../shared/owned-entities-cache.js'
+import { routeHref } from '../shell/routes.js'
+import { getReplayParticipantDetailHref, getStartAgainSearch } from './presenters.js'
 import { battleReviewOptimization, type BattleReviewOptimization } from './review-prompt.js'
+import { refreshRecentBattlesAfterCompletedBattle, type RecentBattlesCache } from './recent-battles-cache.js'
 
-type ReplayPageProps = BasicPageProps
+type ReplayPageProps = OwnedEntitiesPageProps
   & Pick<PropsRuntime<'conversation'>, 'useSessions' | 'useWorkspaces'>
   & {
     conversations: AgentConversationService
     onConversationSubmitted: (sessionId: SessionId) => void
     publicId: string
+    recentBattles: RecentBattlesCache
   }
 
 export function ReplayPage({
   appKey,
   conversations,
   navigation,
+  ownedEntities,
   onConversationSubmitted,
   publicId,
+  recentBattles,
   useSessions,
   useWorkspaces
 }: ReplayPageProps): React.JSX.Element {
+  const Link = useModuleLink(navigation)
   type ReplayState =
     | { status: 'loading' | 'waiting'; battle: Battle | null }
     | {
@@ -72,14 +80,16 @@ export function ReplayPage({
           setState({ status: 'expired', battle, message: '战斗仍在处理中，请稍后重新加载。' })
           return
         }
+        refreshOwnedEntitiesAfterCompletedBattle(ownedEntities, appKey, battle.status)
+        refreshRecentBattlesAfterCompletedBattle(recentBattles, appKey, battle.game_mode_id, battle.status)
         if (battle.status !== 'done' || !battle.replay_url) {
           setState({ status: 'unavailable', battle, message: '这场战斗当前没有可用回放。' })
           return
         }
         const [replay, characters, teams] = await Promise.all([
           fetchReplayResult(battle.replay_url, controller.signal),
-          fetchCharacters(appKey, controller.signal),
-          fetchTeams(appKey, controller.signal)
+          ownedEntities.getCharacters(appKey, controller.signal),
+          ownedEntities.getTeams(appKey, controller.signal)
         ])
         if (disposed) return
         const normalizedBattle = normalizeBattleSharePath(battle)
@@ -112,15 +122,38 @@ export function ReplayPage({
       disposed = true
       controller.abort()
     }
-  }, [appKey, navigation, publicId, reloadKey])
+  }, [appKey, navigation, ownedEntities, publicId, recentBattles, reloadKey])
 
   if (state.status === 'ready') {
+    const startAgainSearch = getStartAgainSearch(state.battle, state.ownPublicId)
+    const isDeathmatch = state.battle.game_mode_id === 'deathmatch'
     return (
       <AgentDuelReplayPlayer
         battle={state.battle}
+        breadcrumbNavigation={(
+          <AgentDuelBreadcrumbs
+            ariaLabel="战斗回放导航"
+            items={[
+              {
+                href: routeHref({ kind: isDeathmatch ? 'character-list' : 'team-list' }),
+                label: '备战室'
+              },
+              {
+                href: routeHref({
+                  kind: isDeathmatch ? 'deathmatch-battles' : 'capture-the-flag-battles'
+                }),
+                label: isDeathmatch ? '死斗模式' : '夺旗模式'
+              },
+              { label: '战斗回放' }
+            ]}
+            linkComponent={Link}
+          />
+        )}
+        getParticipantHref={getReplayParticipantDetailHref}
         i18nMode="bundled"
         locale="zh-CN"
         ownParticipantPublicId={state.ownPublicId}
+        participantLinkComponent={Link}
         participantTools={state.optimization ? (
           <AgentCodeOptimization
             resource={state.optimization.resource}
@@ -130,6 +163,13 @@ export function ReplayPage({
             useWorkspaces={useWorkspaces}
             onSubmitted={onConversationSubmitted}
           />
+        ) : null}
+        replayToolbar={startAgainSearch !== null ? (
+          <button
+            className="agentduel-replay-toolbar-action"
+            type="button"
+            onClick={() => navigation.navigate({ kind: 'battle-new', search: startAgainSearch })}
+          >再来一局</button>
         ) : null}
         replayResult={state.replay}
       />

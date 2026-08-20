@@ -6,13 +6,20 @@ import {
 import { useMemo } from 'react'
 import { fetchOwnedTeam, updateTeam } from '../api/client.js'
 import { useModuleLink } from '../shared/module-link.js'
-import type { WriteDetailPageProps } from '../shared/page-types.js'
+import type { OwnedEntitiesWriteDetailPageProps } from '../shared/page-types.js'
+import { refreshOwnedEntitiesAfterSuccess } from '../shared/owned-entities-cache.js'
 import { useRequestScope, withTurnstile } from '../shared/request-scope.js'
 import { routeHref } from '../shell/routes.js'
 import { toCaptureTheFlagTeam } from './team-mappers.js'
 import { toCaptureTheFlagError } from './errors.js'
 
-export function TeamEditPage({ appKey, navigation, publicId, runTurnstile }: WriteDetailPageProps): React.JSX.Element {
+export function TeamEditPage({
+  appKey,
+  navigation,
+  ownedEntities,
+  publicId,
+  runTurnstile
+}: OwnedEntitiesWriteDetailPageProps): React.JSX.Element {
   const scope = useRequestScope()
   const Link = useModuleLink(navigation)
   const dataSource = useMemo<TeamEditDataSource>(() => ({
@@ -22,11 +29,14 @@ export function TeamEditPage({ appKey, navigation, publicId, runTurnstile }: Wri
       )).catch((error) => { throw toCaptureTheFlagError(error) })
     },
     async updateTeam(teamPublicId: string, input: TeamUpdateInput) {
-      return await scope.run(async (signal) => await withTurnstile(runTurnstile, signal, async (token) => (
-        toCaptureTheFlagTeam(await updateTeam(appKey, teamPublicId, input, token, signal))
-      ))).catch((error) => { throw toCaptureTheFlagError(error) })
+      return await scope.run(async (signal) => await withTurnstile(runTurnstile, signal, async (token) => {
+        const team = await refreshOwnedEntitiesAfterSuccess(ownedEntities, appKey, async () => (
+          await updateTeam(appKey, teamPublicId, input, token, signal)
+        ))
+        return toCaptureTheFlagTeam(team)
+      })).catch((error) => { throw toCaptureTheFlagError(error) })
     }
-  }), [appKey, runTurnstile, scope])
+  }), [appKey, ownedEntities, runTurnstile, scope])
   return (
     <AgentDuelTeamEdit
       dataSource={dataSource}

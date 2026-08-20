@@ -6,13 +6,20 @@ import {
 import { useMemo } from 'react'
 import { fetchOwnedCharacter, updateCharacter } from '../api/client.js'
 import { useModuleLink } from '../shared/module-link.js'
-import type { WriteDetailPageProps } from '../shared/page-types.js'
+import type { OwnedEntitiesWriteDetailPageProps } from '../shared/page-types.js'
+import { refreshOwnedEntitiesAfterSuccess } from '../shared/owned-entities-cache.js'
 import { useRequestScope, withTurnstile } from '../shared/request-scope.js'
 import { routeHref } from '../shell/routes.js'
 import { toDeathmodeCharacter } from './character-mappers.js'
 import { toDeathmodeError } from './errors.js'
 
-export function CharacterEditPage({ appKey, navigation, publicId, runTurnstile }: WriteDetailPageProps): React.JSX.Element {
+export function CharacterEditPage({
+  appKey,
+  navigation,
+  ownedEntities,
+  publicId,
+  runTurnstile
+}: OwnedEntitiesWriteDetailPageProps): React.JSX.Element {
   const scope = useRequestScope()
   const Link = useModuleLink(navigation)
   const dataSource = useMemo<CharacterEditDataSource>(() => ({
@@ -22,11 +29,14 @@ export function CharacterEditPage({ appKey, navigation, publicId, runTurnstile }
       )).catch((error) => { throw toDeathmodeError(error) })
     },
     async updateCharacter(characterPublicId: string, input: CharacterUpdateInput) {
-      return await scope.run(async (signal) => await withTurnstile(runTurnstile, signal, async (token) => (
-        toDeathmodeCharacter(await updateCharacter(appKey, characterPublicId, input, token, signal))
-      ))).catch((error) => { throw toDeathmodeError(error) })
+      return await scope.run(async (signal) => await withTurnstile(runTurnstile, signal, async (token) => {
+        const character = await refreshOwnedEntitiesAfterSuccess(ownedEntities, appKey, async () => (
+          await updateCharacter(appKey, characterPublicId, input, token, signal)
+        ))
+        return toDeathmodeCharacter(character)
+      })).catch((error) => { throw toDeathmodeError(error) })
     }
-  }), [appKey, runTurnstile, scope])
+  }), [appKey, ownedEntities, runTurnstile, scope])
   return (
     <AgentDuelCharacterEdit
       characterDetailHref={(characterPublicId: string) => routeHref({ kind: 'character-detail', publicId: characterPublicId })}

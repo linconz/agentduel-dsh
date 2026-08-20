@@ -12,11 +12,11 @@ export const SETTINGS_WEBSITE_URL = 'https://agentduel.app'
 export const SETTINGS_FAQS = [
   {
     question: '如何上传 Agent 代码？',
-    answer: 'AgentDuel DSH 插件已经帮你集成了提示词，你只需要在角色或者团队详情页填写你的期望目标（蹲在草丛、激进还是猥琐进攻），然后让 AI 帮你实现。'
+    answer: 'AgentDuel DSH 插件已经帮你集成了提示词，你只需要在角色或者团队详情页填写你的策略（是蹲在草丛、激进进攻还是猥琐防守），然后在 Agent 代码优化区域通过 DeepSeek Harness 进行一键优化。'
   },
   {
     question: '如何开始对战？',
-    answer: '有可用角色或队伍后，进入开始对战页面，选择玩法、参赛对象和练习或排位。提交后，页面会等待战斗结果并自动切到战斗回放页。'
+    answer: '有可用角色或队伍后，进入开始对战页面，选择玩法、参赛对象和练习或排位。提交后，页面会等待战斗结果并自动跳转到战斗回放页。'
   },
   {
     question: '对战期间会持续消耗 token 或 Agent 用量吗？',
