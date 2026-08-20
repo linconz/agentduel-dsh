@@ -75,8 +75,10 @@ Content-Type: application/json
 - `POST /api/integrations/check`
 - `POST /api/integrations/characters`
 - `PATCH /api/integrations/characters/:characterPublicId`
+- `PUT /api/integrations/characters/badge-display/:characterPublicId`
 - `POST /api/integrations/teams`
 - `PATCH /api/integrations/teams/:teamPublicId`
+- `PUT /api/integrations/teams/badge-display/:teamPublicId`
 - `POST /api/integrations/battles`
 
 ```http
@@ -189,7 +191,7 @@ export async function agentDuelRequest<T>(
 }
 ```
 
-读取请求可以省略 `turnstileToken`。所有 `POST` 和 `PATCH` 请求必须传入当前提交刚取得的 token。
+读取请求可以省略 `turnstileToken`。所有 `POST`、`PATCH` 请求和两个徽章展示 `PUT` 接口必须传入当前提交刚取得的 token。
 
 ## 7. 接口目录
 
@@ -203,14 +205,17 @@ export async function agentDuelRequest<T>(
 | `GET /api/integrations/characters/:characterPublicId` | 获取本人角色编辑资料 |
 | `POST /api/integrations/characters` | 创建角色 |
 | `PATCH /api/integrations/characters/:characterPublicId` | 修改本人角色 |
+| `PUT /api/integrations/characters/badge-display/:characterPublicId` | 修改本人角色的徽章佩戴、隐藏与顺序 |
 | `GET /api/integrations/teams` | 获取当前账户的团队列表 |
 | `GET /api/integrations/teams/search?q=` | 搜索可挑战团队 |
 | `GET /api/integrations/teams/public/:teamPublicId` | 获取团队公开资料 |
 | `GET /api/integrations/teams/:teamPublicId` | 获取本人团队编辑资料 |
 | `POST /api/integrations/teams` | 创建团队 |
 | `PATCH /api/integrations/teams/:teamPublicId` | 修改本人团队 |
+| `PUT /api/integrations/teams/badge-display/:teamPublicId` | 修改本人团队的徽章佩戴、隐藏与顺序 |
 | `GET /api/integrations/game-modes/:gameModeId/maps` | 获取玩法地图目录及兼容性 |
 | `POST /api/integrations/battles` | 创建练习赛或排位赛 |
+| `GET /api/integrations/battles` | 获取当前账户可见的战斗历史 |
 | `GET /api/integrations/battles/characters/public/:characterPublicId` | 获取角色公开战斗历史 |
 | `GET /api/integrations/battles/characters/:characterPublicId` | 获取本人角色战斗历史 |
 | `GET /api/integrations/battles/teams/public/:teamPublicId` | 获取团队公开战斗历史 |
@@ -325,6 +330,11 @@ interface PublicBadge {
 
 interface OwnedPublicBadge extends PublicBadge {
   is_hidden: boolean;
+}
+
+interface BadgeDisplaySettings {
+  equipped_badge_keys: string[];
+  hidden_badge_keys: string[];
 }
 
 interface PublicCharacterProfile {
@@ -603,6 +613,36 @@ interface OwnedCharacterResponse {
 
 非本人角色返回 HTTP `404 CHARACTER_NOT_FOUND`。
 
+### `PUT /api/integrations/characters/badge-display/:characterPublicId`
+
+完整替换本人角色的徽章佩戴、隐藏分组与公开展示顺序。请求必须携带 App Key、JSON `Content-Type` 和本次请求新取得的 Turnstile token。
+
+```json
+{
+  "equipped_badge_keys": [
+    "character.ranked.debut",
+    "character.completed.total"
+  ],
+  "hidden_badge_keys": [
+    "character.victories.total"
+  ]
+}
+```
+
+两个字段都必须是字符串数组，数组元素必须是非空字符串，数组内及两个数组之间都不能重复。每个 key 必须是该角色当前未撤销且可展示的已获得徽章。`equipped_badge_keys` 的顺序就是公开资料的徽章顺序；`hidden_badge_keys` 的顺序不参与展示。数组可以为空。
+
+成功返回 HTTP `200 BadgeDisplaySettings`，内容为服务端保存的显式设置。接口使用完整替换语义，相同请求幂等且不分页。未出现在两个数组中的有效已获得徽章会清除旧设置，之后按新徽章默认佩戴并置顶；该操作不会改变徽章颁发事实。
+
+| HTTP | `error.code` |
+| --- | --- |
+| 400 | `INVALID_REQUEST_BODY` |
+| 400 | `INVALID_CHARACTER_ID` |
+| 400 | `INVALID_BADGE_DISPLAY_SELECTION` |
+| 400 | `TURNSTILE_TOKEN_REQUIRED` / `TURNSTILE_VERIFICATION_FAILED` |
+| 401 | `INVALID_INTEGRATION_APP_KEY` |
+| 404 | `CHARACTER_NOT_FOUND` |
+| 503 | `SUBMISSION_SERVICE_UNDER_MAINTENANCE` |
+
 ### `POST /api/integrations/characters`
 
 创建角色。请求体只允许以下字段：
@@ -720,6 +760,34 @@ interface OwnedTeamResponse {
 ```
 
 非本人团队返回 HTTP `404 TEAM_NOT_FOUND`。
+
+### `PUT /api/integrations/teams/badge-display/:teamPublicId`
+
+完整替换本人团队的徽章佩戴、隐藏分组与公开展示顺序。认证、Turnstile、请求体校验、完整替换幂等性和新徽章默认置顶规则与角色接口相同：
+
+```json
+{
+  "equipped_badge_keys": [
+    "ctf.ranked.debut",
+    "ctf.completed.total"
+  ],
+  "hidden_badge_keys": [
+    "ctf.victories.total"
+  ]
+}
+```
+
+成功返回 HTTP `200 BadgeDisplaySettings`。`equipped_badge_keys` 的顺序就是团队公开资料的徽章顺序；接口不分页，只修改资料页展示设置，不改变徽章颁发事实。
+
+| HTTP | `error.code` |
+| --- | --- |
+| 400 | `INVALID_REQUEST_BODY` |
+| 400 | `INVALID_TEAM_ID` |
+| 400 | `INVALID_BADGE_DISPLAY_SELECTION` |
+| 400 | `TURNSTILE_TOKEN_REQUIRED` / `TURNSTILE_VERIFICATION_FAILED` |
+| 401 | `INVALID_INTEGRATION_APP_KEY` |
+| 404 | `TEAM_NOT_FOUND` |
+| 503 | `SUBMISSION_SERVICE_UNDER_MAINTENANCE` |
 
 ### `POST /api/integrations/teams`
 
@@ -931,6 +999,7 @@ interface OwnedTeamResponse {
 
 | 路径 | 返回范围 |
 | --- | --- |
+| `GET /api/integrations/battles` | 当前账户可见的练习和排位历史，可按死斗或夺旗筛选 |
 | `GET /api/integrations/battles/characters/public/:characterPublicId` | 角色公开排位历史 |
 | `GET /api/integrations/battles/characters/:characterPublicId` | 本人角色可见的练习和排位历史 |
 | `GET /api/integrations/battles/teams/public/:teamPublicId` | 团队公开排位历史 |
@@ -938,16 +1007,36 @@ interface OwnedTeamResponse {
 
 所有路由都要求 App Key。`public` 表示强制访客视角，不表示免认证。即使当前 App Key 属于目标角色或团队，使用 `/public/` 路径时仍只返回公开排位历史。
 
-本人路由会验证角色或团队属于当前账户。非本人资源返回 `404 CHARACTER_NOT_FOUND` 或 `404 TEAM_NOT_FOUND`。
+集合路由使用 App Key 所属账户视角，规则与 `GET /api/battles` 相同：排位赛双方可见；随机练习赛仅创建者可见；指定目标的挑战练习赛创建者和被挑战方都可见。本人资产路由会验证角色或团队属于当前账户，非本人资源返回 `404 CHARACTER_NOT_FOUND` 或 `404 TEAM_NOT_FOUND`。
 
 ### 13.2 Query 和分页
+
+`GET /api/integrations/battles`
+
+| Query | 类型 | 说明 |
+| --- | --- | --- |
+| `cursor` | string | 上一页返回的 `next_cursor`；第一页省略 |
+| `limit` | number | 兼容客户端传值，但服务端忽略，固定每页 20 条 |
+| `battle_type` | `practice` \| `ranked` | 可选；支持逗号分隔多个值 |
+| `game_mode_id` | `deathmatch` \| `captureTheFlag` | 可选；支持逗号分隔多个值 |
+| `status` | `pending` \| `running` \| `done` \| `error` \| `canceled` | 可选；支持逗号分隔多个值 |
+| `result` | `win` \| `loss` | 可选；结果相对当前 App Key 所属账户计算，支持逗号分隔多个值 |
+| `challenge_role` | `challenger` \| `target` | 可选；只匹配指定目标练习赛，支持逗号分隔多个值 |
+
+例如获取当前账户最近 20 条死斗记录：
+
+```http
+GET /api/integrations/battles?limit=20&game_mode_id=deathmatch
+```
+
+其余四个角色或团队历史路由只支持：
 
 | Query | 类型 | 说明 |
 | --- | --- | --- |
 | `cursor` | string | 上一页返回的 `next_cursor`；第一页省略 |
 | `battle_type` | `practice` \| `ranked` | 可选单值过滤 |
 
-固定每页 20 条。`next_cursor` 是不透明字符串，只能原样传回，不能解析、修改或自行生成。
+所有历史路由固定每页 20 条。`next_cursor` 是不透明字符串，只能原样传回，不能解析、修改或自行生成。
 
 ```json
 {
@@ -1015,6 +1104,7 @@ interface AgentDuelErrorBody {
 | 400 | `TURNSTILE_TOKEN_REQUIRED` | 获取新 Turnstile token 后由用户重新提交 |
 | 400 | `TURNSTILE_VERIFICATION_FAILED` | 重置并重新执行 Turnstile，不自动重放原提交 |
 | 400 | `INVALID_REQUEST_BODY` | 修正请求字段，不自动重试 |
+| 400 | `INVALID_BADGE_DISPLAY_SELECTION` | 刷新本人详情，只提交当前已获得且可展示的徽章 |
 | 400 | `INVALID_BATTLE_REQUEST` | 修正战斗字段、ID、筛选或游标，不自动重试 |
 | 401 | `INVALID_INTEGRATION_APP_KEY` | 停止业务请求，要求用户重新配置 App Key |
 | 404 | `CHARACTER_NOT_FOUND` | 刷新角色数据 |
@@ -1033,6 +1123,7 @@ interface AgentDuelErrorBody {
 - `429` 必须遵守 `Retry-After`。
 - 创建角色、创建团队、创建战斗均不是幂等操作；收到超时或未知结果时先查询列表确认。
 - `PATCH` 使用资源部分更新语义；重复提交前仍建议先刷新最新资源状态。
+- 徽章展示 `PUT` 使用完整替换语义，相同请求幂等；超时后可先读取本人详情核对徽章分组和顺序，再安全重放。
 
 ## 17. 当前不提供的能力
 
@@ -1042,7 +1133,6 @@ interface AgentDuelErrorBody {
 - 角色或团队 Agent 源码提交、编译状态、版本列表或版本切换。
 - 角色或团队删除。
 - 角色或团队自身 `char_` / `team_` API Key 轮换。
-- 徽章佩戴、隐藏或排序修改。
 - 用户账号资料、邮箱、密码或登录状态管理。
 
 客户端不得自行猜测或调用未在本文列出的 `/api/integrations` 路径。

@@ -49,10 +49,10 @@
   },
   "dependencies": {
     "@agentduel/battles-new": "^0.1.0",
-    "@agentduel/capturetheflag": "0.1.4",
-    "@agentduel/component": "^0.1.4",
-    "@agentduel/deathmode": "^0.1.4",
-    "@agentduel/replay-player": "^0.1.1"
+    "@agentduel/capturetheflag": "^0.1.6",
+    "@agentduel/component": "^0.1.7",
+    "@agentduel/deathmode": "^0.1.6",
+    "@agentduel/replay-player": "^0.1.4"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",

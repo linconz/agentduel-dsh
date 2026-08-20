@@ -16,6 +16,19 @@ export const styles = String.raw`
   font-family: inherit;
 }
 
+.agentduel-root--expanded {
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 8%);
+}
+
+.agentduel-root--expanded .agentduel-trigger {
+  width: 100%;
+  margin: 4px 0;
+}
+
 .agentduel-menu {
   display: flex;
   flex-direction: column;
@@ -48,7 +61,7 @@ export const styles = String.raw`
   height: 42px;
   margin: 4px -2px;
   padding: 0 10px 0 8px;
-  border-radius: 12px;
+  border-radius: 0;
   background: transparent;
   text-align: left;
 }
@@ -56,6 +69,18 @@ export const styles = String.raw`
 .agentduel-trigger:hover,
 .agentduel-item:hover {
   background: var(--dsw-alias-bg-hover, rgb(0 0 0 / 5%));
+}
+
+.agentduel-root:not(.agentduel-root--expanded):not(.agentduel-root--rail) .agentduel-trigger {
+  padding: 0 9px 0 7px;
+  border: 1px solid transparent;
+}
+
+.agentduel-root:not(.agentduel-root--expanded):not(.agentduel-root--rail) .agentduel-trigger:hover {
+  border-color: #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 8%);
 }
 
 .agentduel-item[aria-current='page'],
@@ -81,6 +106,15 @@ export const styles = String.raw`
   font-size: 14px;
 }
 
+.agentduel-trigger-indicator {
+  display: block;
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  color: var(--dsw-alias-label-secondary, #737373);
+  fill: currentColor;
+}
+
 .agentduel-section {
   margin: 6px 8px 2px;
   color: var(--dsw-alias-label-secondary, #757575);
@@ -97,7 +131,7 @@ export const styles = String.raw`
   width: 100%;
   min-height: 32px;
   padding: 6px 10px 6px 22px;
-  border-radius: 7px;
+  border-radius: 0;
   background: transparent;
   text-align: left;
   font-size: 13px;
@@ -120,6 +154,55 @@ export const styles = String.raw`
   margin: 8px 0 10px;
   padding: 0;
   border-radius: 50%;
+}
+
+.agentduel-conversation-battle-button,
+a.agentduel-conversation-battle-button:link,
+a.agentduel-conversation-battle-button:visited {
+  box-sizing: border-box;
+  appearance: none;
+  display: inline-flex;
+  min-height: 42px;
+  padding: 0 16px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #7a4b22;
+  border-radius: 8px;
+  background: #7a4b22;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff;
+  font: 700 14px/20px var(--duel-font-body, "Avenir Next", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-shadow: none;
+  text-decoration: none;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background 140ms ease-out, border-color 140ms ease-out, color 140ms ease-out, transform 120ms ease;
+}
+
+.agentduel-conversation-battle-button:hover,
+a.agentduel-conversation-battle-button:hover,
+a.agentduel-conversation-battle-button:visited:hover {
+  background: #69401d;
+  border-color: #7a4b22;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff;
+  text-decoration: none;
+}
+
+.agentduel-conversation-battle-button:active {
+  transform: translateY(1px);
+}
+
+.agentduel-conversation-battle-button:focus-visible {
+  outline: 2px solid #b07600;
+  outline-offset: 3px;
+}
+
+.agentduel-conversation-battle-fallback {
+  position: absolute;
+  right: 32px;
+  bottom: 132px;
 }
 
 .agentduel-page {
@@ -162,6 +245,110 @@ export const styles = String.raw`
 .agentduel-module-host > .agentduel-battles-new,
 .agentduel-module-host > .agentduel-replay-player {
   min-height: 100%;
+}
+
+.agentduel-module-host > .agentduel-replay-player {
+  width: min(100%, 1280px);
+  container: agentduel-replay / inline-size;
+}
+
+/* 回放页单独放宽，并让地图和日志在桌面宽度下始终完整显示。 */
+.agentduel-module-host > .agentduel-replay-player .battle-stage {
+  width: 100%;
+  padding-inline: 16px;
+}
+
+.agentduel-module-host > .agentduel-replay-player .battle-replay-content-row {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, var(--replay-map-target-width)) minmax(320px, 1fr);
+  align-items: stretch;
+  gap: 16px;
+}
+
+.agentduel-module-host > .agentduel-replay-player .battle-replay-main-row,
+.agentduel-module-host > .agentduel-replay-player .battle-replay-log-column {
+  width: 100%;
+  min-width: 0;
+}
+
+.agentduel-module-host > .agentduel-replay-player .battle-replay-log-column,
+.agentduel-module-host > .agentduel-replay-player .battle-replay-log-column:not(.is-open) {
+  display: flex;
+  height: auto;
+}
+
+.agentduel-module-host > .agentduel-replay-player .battle-replay-log-toggle {
+  display: none;
+}
+
+.agentduel-module-host > .agentduel-replay-player .agentduel-spectate-next-button {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #7a4b22;
+  border-radius: 6px;
+  background: #7a4b22;
+  color: #fff;
+  font: 700 14px/20px var(--duel-font-body, inherit);
+  cursor: pointer;
+}
+
+.agentduel-module-host > .agentduel-replay-player .agentduel-spectate-next-button:hover:not(:disabled),
+.agentduel-module-host > .agentduel-replay-player .agentduel-spectate-next-button:focus-visible {
+  border-color: #69401d;
+  background: #69401d;
+}
+
+.agentduel-module-host > .agentduel-replay-player .agentduel-spectate-next-button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.agentduel-module-host > .agentduel-replay-player .replay-participant-tools > .agentduel-character-agent-optimization {
+  width: 100%;
+}
+
+@container agentduel-replay (max-width: 1174px) {
+  .agentduel-module-host > .agentduel-replay-player .battle-replay-content-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .agentduel-module-host > .agentduel-replay-player .battle-replay-log-column {
+    height: 600px;
+  }
+}
+
+@container agentduel-replay (max-width: 860px) {
+  .agentduel-replay-player .app-shell {
+    --replay-map-target-width: calc(100cqi - 32px);
+    --replay-map-target-height: calc((100cqi - 32px) * .61111);
+  }
+
+  .agentduel-replay-player .battle-stage {
+    padding: 16px;
+  }
+}
+
+@container agentduel-replay (max-width: 820px) {
+  .agentduel-module-host > .agentduel-replay-player .replay-participant-tools .agentduel-character-agent-form {
+    grid-template-columns: minmax(0, 600px);
+  }
+
+  .agentduel-module-host > .agentduel-replay-player .replay-participant-tools .agentduel-character-agent-controls {
+    width: 100%;
+    max-width: 600px;
+  }
+}
+
+@container agentduel-replay (max-width: 620px) {
+  .agentduel-module-host > .agentduel-replay-player .replay-participant-tools .agentduel-character-workspace-card {
+    grid-template-columns: 1fr;
+  }
+
+  .agentduel-module-host > .agentduel-replay-player .replay-participant-tools .agentduel-character-workspace-button {
+    width: 100%;
+  }
 }
 
 .agentduel-module-host .agentduel-battles-new .battle-start-shell {
@@ -237,20 +424,6 @@ export const styles = String.raw`
   background: #eef3fa;
 }
 
-.agentduel-key-card {
-  width: min(calc(100% - 32px), 520px);
-  margin: auto;
-  padding: clamp(28px, 5vw, 44px);
-  border: 1px solid var(--dsw-alias-border-l1, #e5e5e5);
-  border-radius: 20px;
-  background: var(--dsw-alias-bg-base, #fff);
-  box-shadow: 0 18px 60px rgb(0 0 0 / 8%);
-}
-
-.agentduel-key-header {
-  margin-bottom: 28px;
-}
-
 .agentduel-eyebrow {
   margin: 0 0 8px;
   color: var(--dsw-alias-label-secondary, #757575);
@@ -260,24 +433,10 @@ export const styles = String.raw`
   text-transform: uppercase;
 }
 
-.agentduel-key-title {
-  margin: 0;
-  font-size: clamp(26px, 4vw, 34px);
-  font-weight: 650;
-  letter-spacing: -.035em;
-  line-height: 1.15;
-}
-
-.agentduel-key-description {
-  margin: 12px 0 0;
-  color: var(--dsw-alias-label-secondary, #666);
-  font-size: 14px;
-  line-height: 1.65;
-}
-
 .agentduel-key-form {
   display: flex;
   flex-direction: column;
+  width: min(100%, 520px);
 }
 
 .agentduel-field-label {
@@ -391,6 +550,17 @@ export const styles = String.raw`
   width: 100%;
   border: 1px solid var(--dsw-alias-border-l2, #d4d4d4);
   background: var(--dsw-alias-bg-base, #fff);
+  animation: agentduel-get-key-flash 2s steps(1, end) infinite;
+}
+
+@keyframes agentduel-get-key-flash {
+  0% {
+    background: #fff;
+  }
+
+  50% {
+    background: #fff4c2;
+  }
 }
 
 .agentduel-get-key-button:hover,
@@ -492,6 +662,169 @@ export const styles = String.raw`
   margin-top: 22px;
 }
 
+.agentduel-settings-page {
+  width: 100%;
+  min-height: 100%;
+  padding: clamp(24px, 4vw, 48px) 20px;
+}
+
+.agentduel-settings-card {
+  width: min(100%, 780px);
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--dsw-alias-border-l1, #e5e5e5);
+  border-radius: 20px;
+  background: var(--dsw-alias-bg-base, #fff);
+  box-shadow: 0 18px 60px rgb(0 0 0 / 8%);
+}
+
+.agentduel-settings-header {
+  padding: clamp(28px, 5vw, 44px);
+  border-bottom: 1px solid var(--dsw-alias-border-l1, #e5e5e5);
+}
+
+.agentduel-settings-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.agentduel-settings-logo {
+  display: grid;
+  flex: 0 0 54px;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+}
+
+.agentduel-settings-logo .agentduel-logo {
+  width: 54px;
+  height: 54px;
+  transform: none;
+}
+
+.agentduel-settings-brand h1 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 650;
+  letter-spacing: -.035em;
+  line-height: 1.15;
+}
+
+.agentduel-settings-meta {
+  display: grid;
+  gap: 12px;
+  margin: 28px 0 0;
+}
+
+.agentduel-settings-meta > div {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+}
+
+.agentduel-settings-meta dt,
+.agentduel-settings-meta dd {
+  margin: 0;
+}
+
+.agentduel-settings-meta dt {
+  color: var(--dsw-alias-label-secondary, #666);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.agentduel-settings-meta dd {
+  min-width: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.agentduel-settings-meta a,
+.agentduel-settings-faq a {
+  color: var(--dsw-alias-button-primary-bg, #2563eb);
+  text-underline-offset: 3px;
+}
+
+.agentduel-settings-meta code {
+  font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.agentduel-settings-key,
+.agentduel-settings-faq {
+  padding: clamp(28px, 5vw, 44px);
+}
+
+.agentduel-settings-key {
+  border-bottom: 1px solid var(--dsw-alias-border-l1, #e5e5e5);
+}
+
+.agentduel-settings-section-header {
+  margin-bottom: 24px;
+}
+
+.agentduel-settings-key--empty > .agentduel-settings-section-header,
+.agentduel-settings-key--empty > .agentduel-key-form {
+  width: min(100%, 520px);
+  margin-inline: auto;
+}
+
+.agentduel-settings-section-header h2,
+.agentduel-settings-section-header p {
+  margin: 0;
+}
+
+.agentduel-settings-section-header h2,
+.agentduel-settings-faq h2 {
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.agentduel-settings-section-header p {
+  margin-top: 8px;
+  color: var(--dsw-alias-label-secondary, #666);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.agentduel-settings-faq h2 {
+  margin: 0 0 24px;
+}
+
+.agentduel-settings-faq > dl {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.agentduel-settings-faq-item {
+  padding: 20px 0;
+  border-top: 1px solid var(--dsw-alias-border-l1, #e5e5e5);
+}
+
+.agentduel-settings-faq-item:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.agentduel-settings-faq-item:last-child {
+  padding-bottom: 0;
+}
+
+.agentduel-settings-faq-item dt {
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.agentduel-settings-faq-item dd {
+  margin: 8px 0 0;
+  color: var(--dsw-alias-label-secondary, #5f6368);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
 .agentduel-secondary-button {
   border: 1px solid var(--dsw-alias-border-l2, #d4d4d4);
   background: transparent;
@@ -506,189 +839,170 @@ export const styles = String.raw`
   background: #912018;
 }
 
-.agentduel-entity-detail {
-  --agentduel-detail-blue: #2563ff;
-  --agentduel-detail-ink: #111827;
-  --agentduel-detail-muted: #5b6472;
-  --agentduel-detail-line: #d8dee8;
+.agentduel-owner-detail-shell {
+  display: grid;
+  align-content: start;
+  gap: 28px;
   min-height: 100%;
   padding: 32px clamp(22px, 5vw, 58px);
-  color: var(--agentduel-detail-ink);
-  font-family: "Avenir Next", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
 }
 
-.agentduel-entity-hero {
+.agentduel-detail-breadcrumb {
+  min-width: 0;
+}
+
+.agentduel-character-workspace-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 28px;
-  padding-bottom: 26px;
-  border-bottom: 1px solid #b8c2d2;
-}
-
-.agentduel-entity-hero > div:first-child {
-  min-width: 0;
-}
-
-.agentduel-entity-back {
-  display: inline-flex;
-  margin-bottom: 22px;
-  color: var(--agentduel-detail-muted);
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.agentduel-entity-back:hover {
-  color: var(--agentduel-detail-blue);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.agentduel-entity-kicker {
-  margin: 0 0 7px;
-  color: var(--agentduel-detail-blue);
-  font: 700 12px/18px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  letter-spacing: .03em;
-  text-transform: uppercase;
-}
-
-.agentduel-entity-hero h1 {
-  max-width: 760px;
-  margin: 0;
-  overflow-wrap: anywhere;
-  font-size: clamp(38px, 6vw, 60px);
-  font-weight: 800;
-  letter-spacing: -.05em;
-  line-height: 1;
-}
-
-.agentduel-entity-summary {
-  max-width: 720px;
-  margin: 15px 0 0;
-  color: var(--agentduel-detail-muted);
-  font-size: 15px;
-  line-height: 1.65;
-  overflow-wrap: anywhere;
-}
-
-.agentduel-entity-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.agentduel-entity-action {
-  display: inline-flex;
-  min-height: 42px;
-  padding: 9px 16px;
-  border: 1px solid #b8c2d2;
-  border-radius: 7px;
+  gap: 18px;
   align-items: center;
-  justify-content: center;
-  background: #fff;
-  color: var(--agentduel-detail-blue);
-  font-size: 14px;
-  font-weight: 750;
-  text-decoration: none;
+  padding: 20px;
+  border: 1px solid var(--duel-line-strong, #b8c2d2);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--duel-surface, #fff) 82%, var(--duel-blue-soft, #e6eeff));
 }
 
-.agentduel-entity-action:hover {
-  border-color: var(--agentduel-detail-blue);
-  background: #eef3fa;
+.agentduel-character-workspace-card h3,
+.agentduel-character-workspace-card p {
+  margin: 0;
 }
 
-.agentduel-entity-action.is-primary {
-  border-color: var(--agentduel-detail-blue);
-  background: var(--agentduel-detail-blue);
-  color: #fff;
+.agentduel-character-workspace-card h3 {
+  color: var(--duel-ink, #111827);
+  font-size: 16px;
+  line-height: 24px;
 }
 
-.agentduel-entity-action.is-primary:hover {
-  border-color: var(--agentduel-detail-ink);
-  background: var(--agentduel-detail-ink);
+.agentduel-character-workspace-card p {
+  margin-top: 5px;
+  color: var(--duel-muted, #5b6472);
+  font-size: 13px;
+  line-height: 20px;
 }
 
-.agentduel-entity-metrics {
+.agentduel-character-workspace-card > .character-detail-error {
+  grid-column: 1 / -1;
+  margin-top: -6px;
+}
+
+.agentduel-character-workspace-button {
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+.agentduel-character-agent-form {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 30px 0 0;
-  border-top: 1px solid #b8c2d2;
-  border-bottom: 1px solid var(--agentduel-detail-line);
+  grid-template-columns: minmax(0, 500px) minmax(220px, 360px);
+  gap: 10px 24px;
+  align-items: start;
+  justify-content: start;
+  padding: 14px 0;
+  border-top: 1px solid var(--duel-line-strong, #b8c2d2);
+  border-bottom: 1px solid var(--duel-line, #d8dee8);
 }
 
-.agentduel-entity-metrics > div {
+.agentduel-character-agent-prompt-field {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  max-width: 500px;
   min-width: 0;
-  padding: 16px 18px 16px 0;
-  border-right: 1px solid var(--agentduel-detail-line);
 }
 
-.agentduel-entity-metrics > div:not(:first-child) {
-  padding-left: 18px;
-}
-
-.agentduel-entity-metrics > div:last-child {
-  border-right: 0;
-}
-
-.agentduel-entity-metrics dt,
-.agentduel-entity-profile dt {
-  color: var(--agentduel-detail-muted);
+.agentduel-character-agent-instructions {
+  color: var(--duel-muted, #5b6472);
   font-size: 12px;
-  font-weight: 650;
   line-height: 18px;
 }
 
-.agentduel-entity-metrics dd {
-  margin: 5px 0 0;
-  overflow-wrap: anywhere;
-  color: var(--agentduel-detail-ink);
-  font: 750 16px/23px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-
-.agentduel-entity-profile {
-  display: grid;
-  grid-template-columns: minmax(150px, .45fr) minmax(0, 1.55fr);
-  gap: 32px;
-  margin-top: 38px;
-}
-
-.agentduel-entity-profile h2 {
-  margin: 0;
-  font-size: 23px;
-  line-height: 30px;
-}
-
-.agentduel-entity-profile dl {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin: 0;
-  border-top: 1px solid #b8c2d2;
-}
-
-.agentduel-entity-profile dl > div {
-  min-width: 0;
-  padding: 14px 14px 14px 0;
-  border-bottom: 1px solid var(--agentduel-detail-line);
-}
-
-.agentduel-entity-profile dd {
-  margin: 4px 0 0;
-  overflow-wrap: anywhere;
-  font-size: 14px;
+.agentduel-character-agent-label,
+.agentduel-character-agent-model-field label {
+  color: var(--duel-muted, #5b6472);
+  font-size: 12px;
   font-weight: 700;
-  line-height: 22px;
+  line-height: 18px;
 }
 
-.agentduel-entity-battles {
-  margin-top: 48px;
-  padding-top: 40px;
-  border-top: 1px solid #b8c2d2;
+.agentduel-character-agent-prompt {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 500px;
+  min-height: 120px;
+  max-height: 200px;
+  padding: 12px;
+  resize: vertical;
+  overflow: auto;
+  border: 1px solid var(--duel-line-strong, #b8c2d2);
+  border-radius: 8px;
+  outline: none;
+  background: color-mix(in srgb, var(--duel-surface, #fff) 76%, transparent);
+  color: var(--duel-ink, #111827);
+  font: 600 13px/20px var(--duel-font-code, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
-.agentduel-entity-battles .battle-records-hero {
-  max-width: 720px;
+.agentduel-character-agent-prompt:focus,
+.agentduel-character-agent-model-field select:focus {
+  border-color: var(--duel-blue, #2563ff);
+  box-shadow: 0 0 0 3px rgb(37 99 255 / 12%);
+}
+
+.agentduel-character-agent-prompt:disabled,
+.agentduel-character-agent-model-field select:disabled {
+  cursor: default;
+  opacity: .62;
+}
+
+.agentduel-character-agent-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-width: 0;
+  max-width: 260px;
+}
+
+.agentduel-character-agent-model-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-width: 0;
+}
+
+.agentduel-character-agent-model-field select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 7px 34px 7px 11px;
+  border: 1px solid var(--duel-line-strong, #b8c2d2);
+  border-radius: 8px;
+  outline: none;
+  background: var(--duel-surface, #fff);
+  color: var(--duel-ink, #111827);
+  font: 600 13px/20px var(--duel-font-body, inherit);
+}
+
+.agentduel-character-agent-submit {
+  width: 100%;
+  min-width: 148px;
+  white-space: nowrap;
+}
+
+.agentduel-character-agent-form > .agentduel-agent-model-failures,
+.agentduel-character-agent-status {
+  grid-column: 1 / -1;
+}
+
+.agentduel-character-agent-status p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.agentduel-character-agent-status:empty {
+  display: none;
 }
 
 .agentduel-conversation-list {
@@ -699,25 +1013,59 @@ export const styles = String.raw`
 }
 
 .agentduel-conversation-row {
-  appearance: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
   width: 100%;
   min-height: 44px;
-  padding: 7px 10px 7px 22px;
+  border-radius: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+.agentduel-conversation-open,
+.agentduel-conversation-delete {
+  appearance: none;
+  min-width: 0;
+  padding: 0;
   border: 0;
-  border-radius: 7px;
   background: transparent;
   color: inherit;
   font: inherit;
-  text-align: left;
   cursor: pointer;
 }
 
+.agentduel-conversation-open {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 7px 6px 7px 22px;
+  text-align: left;
+}
+
 .agentduel-conversation-row:hover,
-.agentduel-conversation-row[aria-current='page'] {
+.agentduel-conversation-row.is-current {
   background: var(--dsw-alias-bg-hover, rgb(0 0 0 / 5%));
+}
+
+.agentduel-conversation-delete {
+  align-self: stretch;
+  padding: 0 10px;
+  color: var(--dsw-alias-label-secondary, #737373);
+  font-size: 10px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.agentduel-conversation-delete:hover,
+.agentduel-conversation-delete:focus-visible {
+  color: #b42318;
+  background: rgb(180 35 24 / 8%);
+}
+
+.agentduel-conversation-open:focus-visible,
+.agentduel-conversation-delete:focus-visible {
+  outline: 2px solid var(--dsw-alias-focus-ring, #2563eb);
+  outline-offset: -2px;
 }
 
 .agentduel-conversation-row-main {
@@ -935,28 +1283,14 @@ export const styles = String.raw`
   line-height: 1.6;
 }
 
-@media (max-width: 900px) {
-  .agentduel-entity-hero,
-  .agentduel-entity-profile {
-    grid-template-columns: 1fr;
-    align-items: start;
-    gap: 20px;
+@media (max-width: 820px) {
+  .agentduel-character-agent-form {
+    grid-template-columns: minmax(0, 600px);
   }
 
-  .agentduel-entity-actions {
-    justify-content: flex-start;
-  }
-
-  .agentduel-entity-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .agentduel-entity-metrics > div:nth-child(2) {
-    border-right: 0;
-  }
-
-  .agentduel-entity-metrics > div:nth-child(-n + 2) {
-    border-bottom: 1px solid var(--agentduel-detail-line);
+  .agentduel-character-agent-controls {
+    width: 100%;
+    max-width: 600px;
   }
 }
 
@@ -965,10 +1299,28 @@ export const styles = String.raw`
     padding: 32px 14px;
   }
 
-  .agentduel-key-card {
-    width: calc(100% - 28px);
-    padding: 24px 20px;
+  .agentduel-settings-page {
+    padding: 14px;
+  }
+
+  .agentduel-settings-card {
     border-radius: 16px;
+  }
+
+  .agentduel-settings-header,
+  .agentduel-settings-key,
+  .agentduel-settings-faq {
+    padding: 24px 20px;
+  }
+
+  .agentduel-settings-logo,
+  .agentduel-settings-logo .agentduel-logo {
+    width: 46px;
+    height: 46px;
+  }
+
+  .agentduel-settings-logo {
+    flex-basis: 46px;
   }
 
   .agentduel-agent-card {
@@ -985,43 +1337,17 @@ export const styles = String.raw`
     width: 100%;
   }
 
-  .agentduel-entity-detail {
+  .agentduel-owner-detail-shell {
     padding: 32px 15px;
   }
 
-  .agentduel-entity-hero,
-  .agentduel-entity-profile {
+  .agentduel-character-workspace-card {
     grid-template-columns: 1fr;
-    align-items: start;
-    gap: 20px;
   }
 
-  .agentduel-entity-actions {
-    justify-content: flex-start;
-  }
-
-  .agentduel-entity-action {
-    flex: 1 1 140px;
-  }
-
-  .agentduel-entity-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .agentduel-entity-metrics > div,
-  .agentduel-entity-metrics > div:not(:first-child) {
-    padding: 13px 10px;
-    border-right: 0;
-    border-bottom: 1px solid var(--agentduel-detail-line);
-  }
-
-  .agentduel-entity-metrics > div:nth-child(odd) {
-    padding-left: 0;
-    border-right: 1px solid var(--agentduel-detail-line);
-  }
-
-  .agentduel-entity-profile dl {
-    grid-template-columns: 1fr;
+  .agentduel-character-agent-submit,
+  .agentduel-character-workspace-button {
+    width: 100%;
   }
 
   .agentduel-dialog-actions {

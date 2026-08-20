@@ -4,16 +4,40 @@ import { normalizeReplayResult } from '@agentduel/replay-player'
 export const API_BASE_URL = 'https://api.agentduel.app'
 export const WEBSITE_BASE_URL = 'https://www.agentduel.app'
 export const CONFIGURATION_SLOT_LIMIT = 10
+export const AGENTDUEL_TYPE = 'dsh'
+export const AGENTDUEL_PLUGIN_VERSION = '0.1.0'
 
 export type CharacterClassId = 'warrior' | 'mage' | 'hunter'
 export type ContentStatus = 'active' | 'name_violation' | 'description_violation' | 'all_violation' | 'suspended'
 export type GameModeId = 'deathmatch' | 'captureTheFlag'
 export type BattleType = 'practice' | 'ranked'
+export type BattleStatus = 'pending' | 'running' | 'done' | 'error' | 'canceled'
+export type BattleResult = 'win' | 'loss'
+export type BattleChallengeRole = 'challenger' | 'target'
 
 export interface ContentRemediationSummary {
   violation_type: 'name_violation' | 'description_violation' | 'all_violation'
   marked_at: string
   submitted_at: string | null
+}
+
+export interface PublicBadge {
+  key: string
+  category: string
+  name: string
+  description: string
+  icon_svg: string | null
+  icon_url: string | null
+  awarded_at: string
+}
+
+export interface OwnedPublicBadge extends PublicBadge {
+  is_hidden: boolean
+}
+
+export interface BadgeDisplaySettings {
+  equipped_badge_keys: string[]
+  hidden_badge_keys: string[]
 }
 
 export interface Character {
@@ -33,6 +57,22 @@ export interface Character {
   ranked_draws: number
   created_at: string
   updated_at: string
+}
+
+export interface OwnedCharacter extends Character {
+  badges: OwnedPublicBadge[]
+}
+
+export interface PublicCharacterProfile {
+  name: string
+  description: string | null
+  class_id: CharacterClassId
+  ranked_rating: number
+  ranked_wins: number
+  ranked_draws: number
+  ranked_losses: number
+  badges: PublicBadge[]
+  character_version: VersionSummary | null
 }
 
 export interface TeamUnit {
@@ -58,6 +98,22 @@ export interface Team {
   ranked_draws: number
   created_at: string
   updated_at: string
+}
+
+export interface OwnedTeam extends Team {
+  badges: OwnedPublicBadge[]
+}
+
+export interface PublicTeamProfile {
+  name: string
+  description: string | null
+  ranked_rating: number
+  ranked_wins: number
+  ranked_draws: number
+  ranked_losses: number
+  badges: PublicBadge[]
+  units: TeamUnit[]
+  team_version: VersionSummary | null
 }
 
 export interface VersionSummary {
@@ -131,7 +187,7 @@ export interface Battle {
   game_mode_id: GameModeId
   map_id: string
   map_asset_path?: string
-  status: 'pending' | 'running' | 'done' | 'error' | 'canceled'
+  status: BattleStatus
   seed: string
   participants: BattleParticipant[]
   winner_side: 'red' | 'blue' | 'draw' | null
@@ -149,6 +205,19 @@ export interface Battle {
 export interface BattlePage {
   battles: Battle[]
   next_cursor: string | null
+}
+
+export interface RecentRankedReplayBattle {
+  battle_public_id: string
+  game_mode_id: GameModeId
+}
+
+export interface PublicBattleReviewContext {
+  share_path: string
+  replay_url: string | null
+  map_snapshot: {
+    terrain_rows: string[]
+  }
 }
 
 export interface BattleTarget {
@@ -197,6 +266,13 @@ export async function agentDuelRequest<T>(
       const headers = new Headers(options.headers)
       headers.set('Accept', 'application/json')
       headers.set('Accept-Language', 'zh-CN')
+      if (path.startsWith('/api/integrations')) {
+        headers.set('AgentDuel-Type', AGENTDUEL_TYPE)
+        headers.set('AgentDuel-Plugin-Version', AGENTDUEL_PLUGIN_VERSION)
+      } else {
+        headers.delete('AgentDuel-Type')
+        headers.delete('AgentDuel-Plugin-Version')
+      }
       headers.set('Authorization', `Bearer ${appKey}`)
       if (requestInit.body !== undefined) headers.set('Content-Type', 'application/json')
       if (turnstileToken !== undefined) headers.set('X-Turnstile-Token', turnstileToken)
@@ -275,6 +351,19 @@ export async function fetchPublicCharacterVersion(
   return data.character.character_version
 }
 
+export async function fetchPublicCharacter(
+  appKey: string,
+  publicId: string,
+  signal?: AbortSignal
+): Promise<PublicCharacterProfile> {
+  const data = await agentDuelRequest<{ character: PublicCharacterProfile }>(
+    appKey,
+    `/api/integrations/characters/public/${encodeURIComponent(publicId)}`,
+    { signal }
+  )
+  return data.character
+}
+
 export async function fetchPublicTeamVersion(
   appKey: string,
   publicId: string,
@@ -288,8 +377,21 @@ export async function fetchPublicTeamVersion(
   return data.team.team_version
 }
 
-export async function fetchOwnedCharacter(appKey: string, publicId: string, signal?: AbortSignal): Promise<Character> {
-  const data = await agentDuelRequest<{ character: Character }>(
+export async function fetchPublicTeam(
+  appKey: string,
+  publicId: string,
+  signal?: AbortSignal
+): Promise<PublicTeamProfile> {
+  const data = await agentDuelRequest<{ team: PublicTeamProfile }>(
+    appKey,
+    `/api/integrations/teams/public/${encodeURIComponent(publicId)}`,
+    { signal }
+  )
+  return data.team
+}
+
+export async function fetchOwnedCharacter(appKey: string, publicId: string, signal?: AbortSignal): Promise<OwnedCharacter> {
+  const data = await agentDuelRequest<{ character: OwnedCharacter }>(
     appKey,
     `/api/integrations/characters/${encodeURIComponent(publicId)}`,
     { signal }
@@ -297,8 +399,8 @@ export async function fetchOwnedCharacter(appKey: string, publicId: string, sign
   return data.character
 }
 
-export async function fetchOwnedTeam(appKey: string, publicId: string, signal?: AbortSignal): Promise<Team> {
-  const data = await agentDuelRequest<{ team: Team }>(
+export async function fetchOwnedTeam(appKey: string, publicId: string, signal?: AbortSignal): Promise<OwnedTeam> {
+  const data = await agentDuelRequest<{ team: OwnedTeam }>(
     appKey,
     `/api/integrations/teams/${encodeURIComponent(publicId)}`,
     { signal }
@@ -337,6 +439,26 @@ export async function updateCharacter(
   return data.character
 }
 
+export async function updateCharacterBadgeDisplay(
+  appKey: string,
+  publicId: string,
+  input: BadgeDisplaySettings,
+  turnstileToken: string,
+  signal?: AbortSignal
+): Promise<BadgeDisplaySettings> {
+  return await agentDuelRequest<BadgeDisplaySettings>(
+    appKey,
+    `/api/integrations/characters/badge-display/${encodeURIComponent(publicId)}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(input),
+      turnstileToken,
+      signal,
+      retryGet: false
+    }
+  )
+}
+
 export async function createTeam(
   appKey: string,
   input: { name: string; units: Array<{ class_id: CharacterClassId }> },
@@ -366,6 +488,26 @@ export async function updateTeam(
     { method: 'PATCH', body: JSON.stringify(input), turnstileToken, signal, retryGet: false }
   )
   return data.team
+}
+
+export async function updateTeamBadgeDisplay(
+  appKey: string,
+  publicId: string,
+  input: BadgeDisplaySettings,
+  turnstileToken: string,
+  signal?: AbortSignal
+): Promise<BadgeDisplaySettings> {
+  return await agentDuelRequest<BadgeDisplaySettings>(
+    appKey,
+    `/api/integrations/teams/badge-display/${encodeURIComponent(publicId)}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(input),
+      turnstileToken,
+      signal,
+      retryGet: false
+    }
+  )
 }
 
 export async function fetchMaps(
@@ -458,6 +600,89 @@ export async function fetchBattleHistory(
   )
 }
 
+export async function fetchAccountBattleHistory(
+  appKey: string,
+  query: {
+    cursor?: string | null
+    limit?: number
+    battleTypes?: readonly BattleType[]
+    gameModeIds?: readonly GameModeId[]
+    statuses?: readonly BattleStatus[]
+    results?: readonly BattleResult[]
+    challengeRoles?: readonly BattleChallengeRole[]
+  },
+  signal?: AbortSignal
+): Promise<BattlePage> {
+  const params = new URLSearchParams()
+  if (query.cursor) params.set('cursor', query.cursor)
+  if (query.limit !== undefined) params.set('limit', String(query.limit))
+  setCsvParam(params, 'battle_type', query.battleTypes)
+  setCsvParam(params, 'game_mode_id', query.gameModeIds)
+  setCsvParam(params, 'status', query.statuses)
+  setCsvParam(params, 'result', query.results)
+  setCsvParam(params, 'challenge_role', query.challengeRoles)
+  const suffix = params.size > 0 ? `?${params.toString()}` : ''
+  return await agentDuelRequest<BattlePage>(
+    appKey,
+    `/api/integrations/battles${suffix}`,
+    { signal }
+  )
+}
+
+export async function fetchPublicBattleHistory(
+  appKey: string,
+  resource: 'characters' | 'teams',
+  publicId: string,
+  query: { cursor?: string | null; battleType?: BattleType },
+  signal?: AbortSignal
+): Promise<BattlePage> {
+  const params = new URLSearchParams()
+  if (query.cursor) params.set('cursor', query.cursor)
+  if (query.battleType) params.set('battle_type', query.battleType)
+  const suffix = params.size > 0 ? `?${params.toString()}` : ''
+  return await agentDuelRequest<BattlePage>(
+    appKey,
+    `/api/integrations/battles/${resource}/public/${encodeURIComponent(publicId)}${suffix}`,
+    { signal }
+  )
+}
+
+export async function fetchRecentRankedReplays(signal?: AbortSignal): Promise<RecentRankedReplayBattle[]> {
+  const data = await publicAgentDuelRequest<{ battles: RecentRankedReplayBattle[] }>(
+    '/api/battles/recent',
+    signal
+  )
+  return data.battles
+}
+
+export async function fetchPublicBattleDetails(publicId: string, signal?: AbortSignal): Promise<Battle> {
+  const data = await publicAgentDuelRequest<{ battle: Battle }>(
+    `/api/battles/${encodeURIComponent(publicId)}`,
+    signal
+  )
+  return data.battle
+}
+
+export async function fetchPublicBattleReviewContext(
+  sharePath: string,
+  signal?: AbortSignal
+): Promise<PublicBattleReviewContext> {
+  const normalizedSharePath = new URL(sharePath, WEBSITE_BASE_URL).pathname
+  const params = new URLSearchParams({ share_path: normalizedSharePath })
+  return await publicAgentDuelRequest<PublicBattleReviewContext>(
+    `/api/battles/review-context?${params.toString()}`,
+    signal
+  )
+}
+
+function setCsvParam(
+  params: URLSearchParams,
+  name: string,
+  values: readonly string[] | undefined
+): void {
+  if (values && values.length > 0) params.set(name, values.join(','))
+}
+
 export async function fetchBattleDetails(appKey: string, publicId: string, signal?: AbortSignal): Promise<Battle> {
   const data = await agentDuelRequest<{ battle: Battle }>(
     appKey,
@@ -465,6 +690,28 @@ export async function fetchBattleDetails(appKey: string, publicId: string, signa
     { signal }
   )
   return data.battle
+}
+
+async function publicAgentDuelRequest<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    credentials: 'omit',
+    signal,
+    headers: {
+      Accept: 'application/json',
+      'Accept-Language': 'zh-CN'
+    }
+  })
+  const body = await readJson(response)
+  if (!response.ok) {
+    const error = body as ApiErrorBody
+    throw new AgentDuelIntegrationError(
+      response.status,
+      error.error?.code ?? null,
+      error.error?.message ?? `AgentDuel 请求失败（${response.status}）`,
+      parseRetryAfter(response.headers.get('Retry-After'))
+    )
+  }
+  return body as T
 }
 
 export async function fetchReplayResult(replayUrl: string, signal?: AbortSignal): Promise<NormalizedReplayResult> {

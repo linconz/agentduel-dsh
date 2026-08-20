@@ -12,17 +12,17 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
       '@agentduel/capturetheflag':
-        specifier: 0.1.4
-        version: 0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+        specifier: ^0.1.6
+        version: 0.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
       '@agentduel/component':
-        specifier: ^0.1.4
-        version: 0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^0.1.7
+        version: 0.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@agentduel/deathmode':
+        specifier: ^0.1.6
+        version: 0.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+      '@agentduel/replay-player':
         specifier: ^0.1.4
         version: 0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
-      '@agentduel/replay-player':
-        specifier: ^0.1.1
-        version: 0.1.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.1
@@ -73,29 +73,29 @@ packages:
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
 
-  '@agentduel/capturetheflag@0.1.4':
-    resolution: {integrity: sha512-63HA036ub5FZS0IUTU5oC1xTVN4S/hNW5ezGl3H8sxuNK08iXAXJ23qUb6rhBjh/SmeEyWZ5ioacZEoLFiU/3A==}
+  '@agentduel/capturetheflag@0.1.6':
+    resolution: {integrity: sha512-3/Xzij5EQ01vi/jTfhDFYf59oI8wrbxfUYfi9kXARmen6IEOcI2WXX3Cw5PMIcRQe71ehHHo/xrfX6Xa4ZF0ww==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
 
-  '@agentduel/component@0.1.4':
-    resolution: {integrity: sha512-kD04EIzJiY2NqaxREs1L9tBnVVne6Qa1DIuuk97WndApkFy6aNIy/jOS0A2sIeTV0TgO7fEVHkX3PKCX2mHWaw==}
+  '@agentduel/component@0.1.7':
+    resolution: {integrity: sha512-pbynuK8yrjX98lJdh8mW2F4rpwfr7Vqq7rcHAvCBuHlt10bGg5b563IfJRgBF6th7BOSovNpdg5pxS/dpPL9iA==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
 
-  '@agentduel/deathmode@0.1.4':
-    resolution: {integrity: sha512-nI39Xaib3JWvdGBtQIMCYVnGUYVhWp7yt4vdcXsSbHwGDp3ojrc8iNU6o6y1pvV2ScAr/QvxMCunSm5dyNtvgw==}
+  '@agentduel/deathmode@0.1.6':
+    resolution: {integrity: sha512-jTtpIIoU5hLnIzsbjCFNbd/G+AbJ9cy8vVNNxD7UeJplnONOVLqRlJ3H5qh3pGHqP1kiDoLD/x2CfXOKOqnmTw==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
 
-  '@agentduel/replay-player@0.1.1':
-    resolution: {integrity: sha512-UvUiyJVX5bagjTG/PlkvS5vPfl2f+rrxgERolDSAEP0vrKIdVWXZaXfey5Mta4lQeSbTUTPGDpO1Q1kTOvAoLw==}
+  '@agentduel/replay-player@0.1.4':
+    resolution: {integrity: sha512-4cHmtu/B0VrI1hicm22fwdukgNNeBfqrVK2g1aPWRY4cmV/fNqT62WtcDErMbBsYuu/9ONCGtaLPhvkUd+kM1w==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       react: '>=18.2.0'
@@ -1207,8 +1207,8 @@ packages:
   '@vitest/utils@3.2.7':
     resolution: {integrity: sha512-x6BDOd7dyo3PFLY3I9/HJ25X/6OurhGXk2/B9gOZNPF7XDVjeBK4k01lQE5uvDpbuheErh91qYuE1E2OEjK3Rw==}
 
-  '@webgpu/types@0.1.71':
-    resolution: {integrity: sha512-mMy8/ODcKhab808co15eW+yN+HgXoQxRQHTiBV9Mrvl1r0ufnid7YOcI+gi4eUWSWl9ezD6TW2KXccrL8HCh2A==}
+  '@webgpu/types@0.1.72':
+    resolution: {integrity: sha512-0cF7RFM2edNoiIS1ODJp0/Gzv4/xSXhwoR0YCza+OWpJWtn4wmo9DvK91aLlH9+uUnwIriP7ZiC3WitmyhuzBw==}
 
   '@xmldom/xmldom@0.8.14':
     resolution: {integrity: sha512-T4EDRUBVZYRldYApjEJiU0e1stYWaRAX7CuSnKzrpwdZKo53zGV8/pqfzV6FfwNl9YThD2OumQYvqtvjvgG7aQ==}
@@ -2214,9 +2214,9 @@ snapshots:
       - react-native
       - typescript
 
-  '@agentduel/capturetheflag@0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
+  '@agentduel/capturetheflag@0.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
     dependencies:
-      '@agentduel/component': 0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@agentduel/component': 0.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       i18next: 26.3.6(typescript@5.9.3)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -2225,7 +2225,7 @@ snapshots:
       - react-native
       - typescript
 
-  '@agentduel/component@0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@agentduel/component@0.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
@@ -2233,9 +2233,9 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@agentduel/deathmode@0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
+  '@agentduel/deathmode@0.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
     dependencies:
-      '@agentduel/component': 0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@agentduel/component': 0.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       i18next: 26.3.6(typescript@5.9.3)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -2244,9 +2244,9 @@ snapshots:
       - react-native
       - typescript
 
-  '@agentduel/replay-player@0.1.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
+  '@agentduel/replay-player@0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
     dependencies:
-      '@agentduel/component': 0.1.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@agentduel/component': 0.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       canvas-confetti: 1.9.4
       i18next: 25.10.10(typescript@5.9.3)
       pixi.js: 8.19.0
@@ -3270,7 +3270,7 @@ snapshots:
       loupe: 3.2.1
       tinyrainbow: 2.0.0
 
-  '@webgpu/types@0.1.71': {}
+  '@webgpu/types@0.1.72': {}
 
   '@xmldom/xmldom@0.8.14': {}
 
@@ -3950,7 +3950,7 @@ snapshots:
     dependencies:
       '@pixi/colord': 2.9.6
       '@types/earcut': 3.0.0
-      '@webgpu/types': 0.1.71
+      '@webgpu/types': 0.1.72
       '@xmldom/xmldom': 0.8.14
       earcut: 3.2.3
       eventemitter3: 5.0.4
