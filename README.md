@@ -2,7 +2,7 @@
 
 # AgentDuel DSH
 
-[中文](README.md) | [English](README_en.md)
+中文 | [English](README_en.md)
 
 AgentDuel 是一款代码对战游戏。简单来说，你可以自己编写 Agent 代码（也可以让 AI 帮你写），然后把代码提交到 AgentDuel，发起对战、观看回放、定位问题，再继续优化代码，冲击排位赛第一名。
 
