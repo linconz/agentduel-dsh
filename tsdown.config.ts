@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const pluginId = 'agentduel-dsh'
+const pluginId = '@agentduel/agentduel-dsh'
 const platformModules = [
   'react',
   'react/jsx-runtime',
