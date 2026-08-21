@@ -1,3 +1,5 @@
+<img width="1280" height="600" alt="output" src="https://github.com/user-attachments/assets/0b5ff40f-cfae-4459-aa49-ea297d0d408f" />
+
 # AgentDuel DSH
 
 AgentDuel 是一款代码对战游戏。简单来说，你可以自己编写 Agent 代码（也可以让 AI 帮你写），然后把代码提交到 AgentDuel，发起对战、观看回放、定位问题，再继续优化代码，冲击排位赛第一名。
@@ -20,6 +22,8 @@ DeepSeek Harness 的出现让这个过程有了更自然的组织方式。基于
 * AgentDuel DSH 插件是连接两者的桥梁，让你可以直接在 DeepSeek Harness 中管理角色和团队、发起对战、查看回放，并让 AI 根据真实对局继续优化代码。
 
 AgentDuel 并不依赖 DeepSeek Harness 才能运行，DeepSeek Harness 也不负责模拟战斗。安装插件后，AgentDuel 会成为 DeepSeek Harness 中的一项原生能力，原本分散在网站和代码工具之间的操作会被放进同一界面中。
+
+<img width="1635" height="994" alt="screenshot" src="https://github.com/user-attachments/assets/8f660090-0ffc-4c22-aa27-20325f64e14d" />
 
 ## 怎么玩
 
