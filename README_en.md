@@ -2,7 +2,7 @@
 
 # AgentDuel DSH
 
-[中文](README.md) | [English](README_en.md)
+[中文](README.md) | English
 
 AgentDuel is a code-based combat game. Put simply, you write Agent code yourself (or have AI help you write it), submit that code to AgentDuel, start matches, watch replays, identify problems, and keep improving your code on your way to the top of the ranked ladder.
 
