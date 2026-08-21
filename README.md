@@ -72,7 +72,7 @@ dsh plugin --profile web add .
 从 npm registry 安装
 
 ```bash
-dsh plugin --profile web add @agentduel/agentduel-dsh
+dsh plugin --profile web install @agentduel/agentduel-dsh@0.1.1
 ```
 
 启动
