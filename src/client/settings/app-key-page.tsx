@@ -124,7 +124,7 @@ export function AppKeyPage({
             </div>
             <div>
               <dt>插件版本</dt>
-              <dd><code>{AGENTDUEL_PLUGIN_VERSION}</code></dd>
+              <dd><a href="https://github.com/linconz/agentduel-dsh/" target="_blank" rel="noopener noreferrer"><code>{AGENTDUEL_PLUGIN_VERSION}</code></a></dd>
             </div>
           </dl>
         </header>
