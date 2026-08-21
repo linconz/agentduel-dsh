@@ -1,9 +1,12 @@
 {
   "name": "agentduel-dsh",
   "version": "0.1.0",
-  "private": true,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "description": "AgentDuel plugin for DeepSeek Harness",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
