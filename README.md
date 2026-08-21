@@ -1,61 +1,78 @@
 # AgentDuel DSH
 
-AgentDuel 的 DeepSeek Harness 插件。它通过公开 Integrations API 和 AgentDuel npm 组件，在 DSH 内提供完整的死斗与夺旗操作界面。
+AgentDuel 是一款代码对战游戏。简单来说，你可以自己编写 Agent 代码（也可以让 AI 帮你写），然后把代码提交到 AgentDuel，发起对战、观看回放、定位问题，再继续优化代码，冲击排位赛第一名。
 
-当前功能包括：
+AgentDuel 比拼的不是谁更会临场输入提示词，而是谁写出的 Agent 更聪明。
 
-- 死斗角色列表、详情、创建、编辑、最近战斗和发起对战
-- 夺旗团队列表、详情、创建、编辑、最近战斗和发起对战
-- 随机练习、指定对手、排位、复仇和战斗回放
-- 通过 DSH 模型发起 Agent 优化或对局分析对话，并在侧边栏查看这些对话的状态
-- App Key 本地设置、失效清理以及每次写操作独立的 Turnstile 验证
-- 基于账户摘要的新用户引导，串联死斗角色创建、首次对战和 Agent 代码优化
+战斗开始后，双方代码会在相同的规则的沙箱环境运行，根据视野和局势决定移动、攻击、施放技能或争夺旗帜。每场比赛都会生成完整回放，你可以查看 Agent 每个回合看到了什么、做出了什么决定，以及一场比赛是怎样获胜或输掉的。
 
-“发起优化对话”会读取所选工作区对应会话的现有模型目录，并提供“优化并提交代码”和“分析对局”两套可编辑提示词。提交成功后，插件会自动选中新建的 DSH 原生会话；对话内容与执行状态由 DSH 持久化，AgentDuel 的会话归属索引保存在当前浏览器的本地存储中。
+## AgentDuel 与 DeepSeek Harness 的关系
 
-角色与团队列表按 API 返回的槽位顺序展示，点击列表行进入详情页；详情页集中显示当前排位积分、胜平负、代码版本、资料状态和该对象的最近战斗，再由“编辑资料”进入编辑页。账户级最近战斗会聚合当前 App Key 下全部本人角色或团队的历史，并在插件内完成筛选、去重和分页。回放资源请求不会携带 App Key。
+AgentDuel 刚上线时，网站已经提供了可以一键复制给 Codex、Claude Code、WorkBuddy 等自主 Agent 工具的提示词。这些工具能够阅读规则、编写代码并完成提交，但整个过程仍然有些割裂。
+你需要在 AgentDuel 中查看角色和对局，复制提示词到另一个工具，等待 AI 修改代码，再回到网站提交和发起对战。比赛结束后，还要打开回放、整理对局信息，然后重新切回 AI 工具继续分析。工具都能完成各自的工作，只是人需要不断在中间传递信息。
 
-界面直接使用以下公共包，组件样式会内联到 `lib/client.js`，交付时不需要额外 CSS 文件：
+DeepSeek Harness 的出现让这个过程有了更自然的组织方式。基于一切皆插件的架构，AgentDuel DSH 插件正是建立在这套插件体系之上，把 AgentDuel 的游戏功能和 DSH 的代码 Agent 能力连接到一起。
 
-- `@agentduel/deathmode` 0.1.1
-- `@agentduel/capturetheflag` 0.1.1
-- `@agentduel/battles-new` 0.1.0
-- `@agentduel/replay-player` 0.1.0
+两者的分工很明确：
 
-## 开发
+* AgentDuel 是竞技场，负责游戏规则、代码运行、对手匹配、战斗结果、排位积分和对局回放。
+* DeepSeek Harness 是 Agent 的工作环境，负责读取代码目录、调用模型、修改代码策略、运行测试并保存优化过程。
+* AgentDuel DSH 插件是连接两者的桥梁，让你可以直接在 DeepSeek Harness 中管理角色和团队、发起对战、查看回放，并让 AI 根据真实对局继续优化代码。
+
+AgentDuel 并不依赖 DeepSeek Harness 才能运行，DeepSeek Harness 也不负责模拟战斗。安装插件后，AgentDuel 会成为 DeepSeek Harness 中的一项原生能力，原本分散在网站和代码工具之间的操作会被放进同一界面中。
+
+## 怎么玩
+
+第一次使用时，需要登录 [AgentDuel](https://agentduel.app) 创建一个 App Key，然后在插件中完成配置。接下来可以按照下面的流程开始游戏：
+
+1. 创建角色或团队
+
+   选择 1v1 死斗角色，或者组建一支 2v2 夺旗队伍，并设置职业、名称和参赛信息。
+
+2. 准备 Agent 代码
+
+   在 DSH 中选择保存 Agent 代码的工作区。你可以自己编写代码，也可以直接发起优化对话，让 DSH 阅读 AgentDuel 的规则文档并生成第一版策略。
+
+3. 提交代码
+
+   代码通过检查后，将它提交到对应的角色或团队。此后，这份代码就是角色在战斗中的决策大脑。
+
+4. 发起对战
+
+   你可以先参加随机练习赛，也可以搜索并挑战指定对手。策略稳定后，再进入排位赛争夺积分和排名。
+
+5. 观看回放并继续优化
+
+   比赛结束后，在插件中打开回放，查看地图、行动记录和关键回合。如果不知道问题出在哪里，可以直接创建一个 DSH 对话，让 AI 分析对局，并结合当前工作区中的代码完成修改和测试。
+
+整个过程可以概括为：
+
+创建角色或团队 → 编写并提交代码 → 发起对战 → 查看回放 → 分析问题 → 优化代码 → 再次对战
+
+这也是 AgentDuel 最主要的乐趣。你提交的不是一份写完就结束的程序，而是一个会在一次次实战中逐渐变强的 Agent。输掉一场比赛并不意味着结束，它只是为下一次修改提供了一份新的测试结果。
+
+## 安装
+
+源码方式安装
 
 ```bash
-pnpm install
-pnpm test
-pnpm typecheck
-pnpm build
-```
-
-首次把当前目录安装到 DSH 的 `web` profile：
-
-```bash
+git clone https://github.com/linconz/agentduel-dsh.git
+cd agentduel-dsh
+npm install
+npm run build
 dsh plugin --profile web add .
-dsh web
 ```
 
-浏览器打开终端中显示的地址（默认通常是 `http://127.0.0.1:3080`）。
-
-修改浏览器端代码时，可以分别运行：
+从 npm registry 安装
 
 ```bash
-# 终端 1：持续重建插件
-pnpm watch
-
-# 终端 2：启动 DSH；它会监听 client bundle 的变化
-dsh web
+dsh plugin --profile web add agentduel/agentduel-dsh
 ```
 
-如果没有全局 `dsh` 命令，可将上面的 `dsh` 替换为 `pnpm dlx @deepseek-ai/dsh`。
+启动
 
-检查插件是否进入最终配置：
-
-```bash
-dsh --profile web --dump-config
+```
+dsh web
 ```
 
 卸载本地插件：
