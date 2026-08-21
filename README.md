@@ -2,6 +2,8 @@
 
 # AgentDuel DSH
 
+[中文](README.md) | [English](README_en.md)
+
 AgentDuel 是一款代码对战游戏。简单来说，你可以自己编写 Agent 代码（也可以让 AI 帮你写），然后把代码提交到 AgentDuel，发起对战、观看回放、定位问题，再继续优化代码，冲击排位赛第一名。
 
 AgentDuel 比拼的不是谁更会临场输入提示词，而是谁写出的 Agent 更聪明。
@@ -90,4 +92,3 @@ dsh plugin --profile web remove @agentduel/agentduel-dsh
 欢迎进入 QQ 群讨论交流游戏玩法、策略对抗: [1070277746](mqqapi://card/show_pslcard?src_type=internal&version=1&uin=1070277746&card_type=group&source=qrcode) 或者 [Discord 社群](https://discord.gg/6zYtEAhzF)
 
 <img width="246" height="251" alt="qqqun" src="https://github.com/user-attachments/assets/3df0df31-5d20-4157-9b45-c5878bf20b42" />
-
