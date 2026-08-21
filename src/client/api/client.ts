@@ -5,7 +5,7 @@ export const API_BASE_URL = 'https://api.agentduel.app'
 export const WEBSITE_BASE_URL = 'https://www.agentduel.app'
 export const CONFIGURATION_SLOT_LIMIT = 10
 export const AGENTDUEL_TYPE = 'dsh'
-export const AGENTDUEL_PLUGIN_VERSION = '0.1.1'
+export const AGENTDUEL_PLUGIN_VERSION = '0.1.2'
 
 export type CharacterClassId = 'warrior' | 'mage' | 'hunter'
 export type ContentStatus = 'active' | 'name_violation' | 'description_violation' | 'all_violation' | 'suspended'
