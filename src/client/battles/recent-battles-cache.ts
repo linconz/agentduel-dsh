@@ -88,21 +88,26 @@ export function createRecentBattlesCache(options: RecentBattlesCacheOptions = {}
       entries.delete(key)
     }
   }
+  const invalidateEntries = (mode?: GameModeId): void => {
+    for (const entry of entries.values()) {
+      if (mode !== undefined && entry.mode !== mode) continue
+      entry.pending?.controller.abort()
+      entry.pending = null
+      entry.expiresAt = 0
+    }
+  }
   const observe = (promise: Promise<BattlePage>, appKey: string): void => {
     void promise.catch((error: unknown) => {
       if (activeAppKey === appKey && isInvalidAppKey(error)) onUnauthorized()
     })
   }
-  const getOrLoad = (appKey: string, mode: GameModeId, query: RecentBattlesQuery): Promise<BattlePage> => {
-    requireActiveKey(appKey)
-    const key = cacheKey(mode, query)
-    const existing = entries.get(key)
-    if (existing !== undefined && existing.value !== null && now() < existing.expiresAt) {
-      return Promise.resolve(existing.value)
-    }
-    if (existing?.pending) return existing.pending.promise
-
-    const entry = existing ?? { mode, value: null, expiresAt: 0, pending: null }
+  const loadEntry = (
+    appKey: string,
+    mode: GameModeId,
+    query: RecentBattlesQuery,
+    key: string,
+    entry: CacheEntry
+  ): Promise<BattlePage> => {
     const controller = new AbortController()
     let promise: Promise<BattlePage>
     promise = Promise.resolve()
@@ -126,6 +131,23 @@ export function createRecentBattlesCache(options: RecentBattlesCacheOptions = {}
     observe(promise, appKey)
     return promise
   }
+  const getOrLoad = (appKey: string, mode: GameModeId, query: RecentBattlesQuery): Promise<BattlePage> => {
+    requireActiveKey(appKey)
+    const key = cacheKey(mode, query)
+    const existing = entries.get(key)
+    if (existing !== undefined) {
+      if (existing.value !== null) {
+        if (now() >= existing.expiresAt && existing.pending === null) {
+          loadEntry(appKey, mode, query, key, existing)
+        }
+        return Promise.resolve(existing.value)
+      }
+      if (existing.pending !== null) return existing.pending.promise
+    }
+
+    const entry = existing ?? { mode, value: null, expiresAt: 0, pending: null }
+    return loadEntry(appKey, mode, query, key, entry)
+  }
 
   return {
     setAppKey(appKey) {
@@ -138,12 +160,16 @@ export function createRecentBattlesCache(options: RecentBattlesCacheOptions = {}
     },
     clear(appKey) {
       if (disposed || activeAppKey !== appKey) return
-      clearEntries()
+      invalidateEntries()
     },
     refreshDefault(appKey, mode) {
       if (disposed || activeAppKey !== appKey) return
-      clearEntries(mode)
-      getOrLoad(appKey, mode, DEFAULT_QUERY)
+      const key = cacheKey(mode, DEFAULT_QUERY)
+      const entry = entries.get(key) ?? { mode, value: null, expiresAt: 0, pending: null }
+      entry.pending?.controller.abort()
+      entry.pending = null
+      entry.expiresAt = 0
+      loadEntry(appKey, mode, DEFAULT_QUERY, key, entry)
     },
     dispose() {
       if (disposed) return

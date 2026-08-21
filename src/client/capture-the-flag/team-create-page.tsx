@@ -7,6 +7,7 @@ import {
 import { useMemo } from 'react'
 import { CONFIGURATION_SLOT_LIMIT, WEBSITE_BASE_URL, createTeam } from '../api/client.js'
 import { useModuleLink } from '../shared/module-link.js'
+import type { DashboardSummaryCache } from '../shared/dashboard-summary-cache.js'
 import type { OwnedEntitiesWritePageProps } from '../shared/page-types.js'
 import { refreshOwnedEntitiesAfterSuccess } from '../shared/owned-entities-cache.js'
 import { useRequestScope, withTurnstile } from '../shared/request-scope.js'
@@ -16,10 +17,11 @@ import { toCaptureTheFlagError } from './errors.js'
 
 export function TeamCreatePage({
   appKey,
+  dashboardSummary,
   navigation,
   ownedEntities,
   runTurnstile
-}: OwnedEntitiesWritePageProps): React.JSX.Element {
+}: OwnedEntitiesWritePageProps & { dashboardSummary: DashboardSummaryCache }): React.JSX.Element {
   const scope = useRequestScope()
   const Link = useModuleLink(navigation)
   const dataSource = useMemo<TeamCreateDataSource>(() => ({
@@ -34,13 +36,14 @@ export function TeamCreatePage({
         const team = await refreshOwnedEntitiesAfterSuccess(ownedEntities, appKey, async () => (
           await createTeam(appKey, input, token, signal)
         ))
+        dashboardSummary.refresh(appKey, 'zh-CN')
         return toCaptureTheFlagTeam(team)
       })).catch((error) => { throw toCaptureTheFlagError(error) })
     },
     async resolveErrorMessage(error: unknown) {
       return error instanceof Error ? error.message : null
     }
-  }), [appKey, ownedEntities, runTurnstile, scope])
+  }), [appKey, dashboardSummary, ownedEntities, runTurnstile, scope])
   return (
     <AgentDuelTeamCreate
       assetBaseUrl={WEBSITE_BASE_URL}

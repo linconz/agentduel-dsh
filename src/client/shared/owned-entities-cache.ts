@@ -1,13 +1,10 @@
 import {
   fetchCharacters,
-  fetchPublicCharacterVersion,
-  fetchPublicTeamVersion,
   fetchTeams,
   isInvalidAppKey,
   type BattleStatus,
   type Character,
-  type Team,
-  type VersionSummary
+  type Team
 } from '../api/client.js'
 
 export const OWNED_ENTITIES_CACHE_TTL_MS = 2 * 60 * 1000
@@ -26,27 +23,13 @@ interface PendingRequest<T> {
 
 export interface OwnedEntitiesCache {
   setAppKey: (appKey: string | null) => void
-  peekCharacterList: (appKey: string) => OwnedCharacterListData | null
-  peekTeamList: (appKey: string) => OwnedTeamListData | null
   peekCharacters: (appKey: string) => Character[] | null
   peekTeams: (appKey: string) => Team[] | null
-  getCharacterList: (appKey: string, signal?: AbortSignal) => Promise<OwnedCharacterListData>
-  getTeamList: (appKey: string, signal?: AbortSignal) => Promise<OwnedTeamListData>
   getCharacters: (appKey: string, signal?: AbortSignal) => Promise<Character[]>
   getTeams: (appKey: string, signal?: AbortSignal) => Promise<Team[]>
   prefetchAll: (appKey: string) => void
   refreshAll: (appKey: string) => void
   dispose: () => void
-}
-
-export interface OwnedCharacterListData {
-  characters: Character[]
-  versions: ReadonlyMap<string, VersionSummary | null>
-}
-
-export interface OwnedTeamListData {
-  teams: Team[]
-  versions: ReadonlyMap<string, VersionSummary | null>
 }
 
 interface AppKeySource {
@@ -55,7 +38,7 @@ interface AppKeySource {
 }
 
 export function bindOwnedEntitiesCache(
-  cache: Pick<OwnedEntitiesCache, 'setAppKey' | 'prefetchAll' | 'dispose'>,
+  cache: Pick<OwnedEntitiesCache, 'setAppKey' | 'dispose'>,
   source: AppKeySource
 ): () => void {
   let activeAppKey: string | null | undefined
@@ -64,7 +47,6 @@ export function bindOwnedEntitiesCache(
     if (appKey === activeAppKey) return
     activeAppKey = appKey
     cache.setAppKey(appKey)
-    if (appKey !== null) cache.prefetchAll(appKey)
   }
   const unsubscribe = source.subscribe(syncAppKey)
   syncAppKey()
@@ -106,8 +88,6 @@ interface OwnedEntitiesCacheOptions {
   now?: () => number
   loadCharacters?: (appKey: string, signal: AbortSignal) => Promise<Character[]>
   loadTeams?: (appKey: string, signal: AbortSignal) => Promise<Team[]>
-  loadCharacterVersion?: (appKey: string, publicId: string, signal: AbortSignal) => Promise<VersionSummary | null>
-  loadTeamVersion?: (appKey: string, publicId: string, signal: AbortSignal) => Promise<VersionSummary | null>
   onUnauthorized?: () => void
 }
 
@@ -116,13 +96,9 @@ export function createOwnedEntitiesCache(options: OwnedEntitiesCacheOptions = {}
   const now = options.now ?? Date.now
   const loadCharacters = options.loadCharacters ?? fetchCharacters
   const loadTeams = options.loadTeams ?? fetchTeams
-  const loadCharacterVersion = options.loadCharacterVersion ?? fetchPublicCharacterVersion
-  const loadTeamVersion = options.loadTeamVersion ?? fetchPublicTeamVersion
   const onUnauthorized = options.onUnauthorized ?? (() => {})
   const characters = createEntry<Character[]>()
   const teams = createEntry<Team[]>()
-  const characterVersions = createEntry<ReadonlyMap<string, VersionSummary | null>>()
-  const teamVersions = createEntry<ReadonlyMap<string, VersionSummary | null>>()
   let activeAppKey: string | null = null
   let unauthorizedAppKey: string | null = null
   let generation = 0
@@ -132,8 +108,6 @@ export function createOwnedEntitiesCache(options: OwnedEntitiesCacheOptions = {}
     generation += 1
     clearEntry(characters)
     clearEntry(teams)
-    clearEntry(characterVersions)
-    clearEntry(teamVersions)
   }
   const requireActiveKey = (appKey: string): void => {
     if (disposed) throw abortError('角色与团队缓存已释放')
@@ -199,28 +173,10 @@ export function createOwnedEntitiesCache(options: OwnedEntitiesCacheOptions = {}
       teams: loadEntry(teams, appKey, loadTeams, 'teams')
     }
   }
-  const loadCharacterVersions = (
-    appKey: string,
-    values: Character[]
-  ): Promise<ReadonlyMap<string, VersionSummary | null>> => loadEntry(
-    characterVersions,
-    appKey,
-    async (key, signal) => await loadVersionMap(values, key, signal, loadCharacterVersion),
-    versionEntryKey(values)
-  )
-  const loadTeamVersions = (
-    appKey: string,
-    values: Team[]
-  ): Promise<ReadonlyMap<string, VersionSummary | null>> => loadEntry(
-    teamVersions,
-    appKey,
-    async (key, signal) => await loadVersionMap(values, key, signal, loadTeamVersion),
-    versionEntryKey(values)
-  )
   const prefetch = (appKey: string): void => {
     const requests = ensureAll(appKey)
-    observe(requests.characters.then(async values => await loadCharacterVersions(appKey, values)), appKey)
-    observe(requests.teams.then(async values => await loadTeamVersions(appKey, values)), appKey)
+    observe(requests.characters, appKey)
+    observe(requests.teams, appKey)
   }
 
   return {
@@ -230,30 +186,8 @@ export function createOwnedEntitiesCache(options: OwnedEntitiesCacheOptions = {}
       activeAppKey = appKey
       unauthorizedAppKey = null
     },
-    peekCharacterList(appKey) {
-      const values = peekEntry(characters, appKey)
-      if (values === null || characterVersions.key !== versionEntryKey(values)) return null
-      const versions = peekEntry(characterVersions, appKey)
-      return versions === null ? null : { characters: values, versions }
-    },
-    peekTeamList(appKey) {
-      const values = peekEntry(teams, appKey)
-      if (values === null || teamVersions.key !== versionEntryKey(values)) return null
-      const versions = peekEntry(teamVersions, appKey)
-      return versions === null ? null : { teams: values, versions }
-    },
     peekCharacters: appKey => peekEntry(characters, appKey),
     peekTeams: appKey => peekEntry(teams, appKey),
-    async getCharacterList(appKey, signal) {
-      const values = await waitForRequest(ensureAll(appKey).characters, signal)
-      const versions = await waitForRequest(loadCharacterVersions(appKey, values), signal)
-      return { characters: values, versions }
-    },
-    async getTeamList(appKey, signal) {
-      const values = await waitForRequest(ensureAll(appKey).teams, signal)
-      const versions = await waitForRequest(loadTeamVersions(appKey, values), signal)
-      return { teams: values, versions }
-    },
     async getCharacters(appKey, signal) {
       const requests = ensureAll(appKey)
       return await waitForRequest(requests.characters, signal)
@@ -290,27 +224,6 @@ function clearEntry<T>(entry: CacheEntry<T>): void {
   entry.expiresAt = 0
   entry.pending = null
   entry.key = null
-}
-
-function versionEntryKey(values: ReadonlyArray<Character | Team>): string {
-  return JSON.stringify(values.map(value => [
-    value.public_id,
-    value.status,
-    value.updated_at,
-    value.code_source
-  ]))
-}
-
-async function loadVersionMap<T extends Character | Team>(
-  values: readonly T[],
-  appKey: string,
-  signal: AbortSignal,
-  loader: (key: string, publicId: string, requestSignal: AbortSignal) => Promise<VersionSummary | null>
-): Promise<ReadonlyMap<string, VersionSummary | null>> {
-  const versions = await Promise.all(values.map(async value => (
-    value.status === 'active' ? await loader(appKey, value.public_id, signal) : null
-  )))
-  return new Map(values.map((value, index) => [value.public_id, versions[index] ?? null]))
 }
 
 async function waitForRequest<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {

@@ -13,7 +13,9 @@ type AgentDuelPageProps = PropsRuntime<'conversation'> & AgentDuelInjected
 
 export function AgentDuelPage({
   model,
+  battleMaps,
   conversations,
+  dashboardSummary,
   ownedEntities,
   recentBattles,
   useSessions,
@@ -49,7 +51,9 @@ export function AgentDuelPage({
       ) : (
         <AgentDuelFeaturePage
           appKey={snapshot.appKey}
+          battleMaps={battleMaps}
           conversations={conversations}
+          dashboardSummary={dashboardSummary}
           navigation={navigation}
           ownedEntities={ownedEntities}
           recentBattles={recentBattles}

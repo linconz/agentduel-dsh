@@ -12,6 +12,7 @@ import {
   fetchClasses
 } from '../api/client.js'
 import { useModuleLink } from '../shared/module-link.js'
+import type { DashboardSummaryCache } from '../shared/dashboard-summary-cache.js'
 import type { OwnedEntitiesWritePageProps } from '../shared/page-types.js'
 import { refreshOwnedEntitiesAfterSuccess } from '../shared/owned-entities-cache.js'
 import { useRequestScope, withTurnstile } from '../shared/request-scope.js'
@@ -21,10 +22,11 @@ import { toDeathmodeError } from './errors.js'
 
 export function CharacterCreatePage({
   appKey,
+  dashboardSummary,
   navigation,
   ownedEntities,
   runTurnstile
-}: OwnedEntitiesWritePageProps): React.JSX.Element {
+}: OwnedEntitiesWritePageProps & { dashboardSummary: DashboardSummaryCache }): React.JSX.Element {
   const scope = useRequestScope()
   const Link = useModuleLink(navigation)
   const dataSource = useMemo<CharacterCreateDataSource>(() => ({
@@ -42,13 +44,14 @@ export function CharacterCreatePage({
         const character = await refreshOwnedEntitiesAfterSuccess(ownedEntities, appKey, async () => (
           await createCharacter(appKey, { name: input.name, class_id: input.classId }, token, signal)
         ))
+        dashboardSummary.refresh(appKey, 'zh-CN')
         return toDeathmodeCharacter(character)
       })).catch((error) => { throw toDeathmodeError(error) })
     },
     async resolveErrorMessage(error: unknown) {
       return error instanceof Error ? error.message : null
     }
-  }), [appKey, ownedEntities, runTurnstile, scope])
+  }), [appKey, dashboardSummary, ownedEntities, runTurnstile, scope])
 
   return (
     <AgentDuelCharacterCreate

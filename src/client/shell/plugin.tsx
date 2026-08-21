@@ -3,8 +3,10 @@ import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import { bindRecentBattlesCache, createRecentBattlesCache } from '../battles/recent-battles-cache.js'
+import { bindBattleMapsCache, createBattleMapsCache } from '../battles/battle-maps-cache.js'
 import { ConversationBattleLinkBridge } from '../conversations/battle-link-bridge.js'
 import { createAgentConversationService } from '../conversations/service.js'
+import { bindDashboardSummaryCache, createDashboardSummaryCache } from '../shared/dashboard-summary-cache.js'
 import { bindOwnedEntitiesCache, createOwnedEntitiesCache } from '../shared/owned-entities-cache.js'
 import { styles } from '../styles/styles.js'
 import { agentDuelPackageStyles } from '../styles/package-styles.js'
@@ -16,18 +18,24 @@ export const inject = ['slots', 'connection', 'sessions', 'workspaces']
 
 export function apply(ctx: ClientContext): void {
   const model = createAgentDuelModel()
+  const battleMaps = createBattleMapsCache({ onUnauthorized: model.invalidateAppKey })
+  const dashboardSummary = createDashboardSummaryCache({ onUnauthorized: model.invalidateAppKey })
   const ownedEntities = createOwnedEntitiesCache({ onUnauthorized: model.invalidateAppKey })
   const recentBattles = createRecentBattlesCache({ onUnauthorized: model.invalidateAppKey })
   const connection = ctx.get('connection') as ConnectionHandle
   const conversations = createAgentConversationService(ctx, connection)
   const injectModel = (): AgentDuelInjected => ({
     model,
+    battleMaps,
     conversations,
+    dashboardSummary,
     ownedEntities,
     recentBattles,
     getSession: sessionId => ctx.sessions.binding(sessionId)?.session
   })
   installStyles(ctx)
+  ctx.effect(() => bindBattleMapsCache(battleMaps, model), 'agentduel: battle maps cache')
+  ctx.effect(() => bindDashboardSummaryCache(dashboardSummary, model), 'agentduel: dashboard summary cache')
   ctx.effect(() => bindOwnedEntitiesCache(ownedEntities, model), 'agentduel: owned entities cache')
   ctx.effect(() => bindRecentBattlesCache(recentBattles, model), 'agentduel: recent battles cache')
   ctx.effect(() => conversations.bindStorage(), 'agentduel: conversation storage')

@@ -11,6 +11,7 @@ export type CharacterClassId = 'warrior' | 'mage' | 'hunter'
 export type ContentStatus = 'active' | 'name_violation' | 'description_violation' | 'all_violation' | 'suspended'
 export type GameModeId = 'deathmatch' | 'captureTheFlag'
 export type BattleType = 'practice' | 'ranked'
+export type IntegrationLocale = 'zh-CN' | 'en-US'
 export type BattleStatus = 'pending' | 'running' | 'done' | 'error' | 'canceled'
 export type BattleResult = 'win' | 'loss'
 export type BattleChallengeRole = 'challenger' | 'target'
@@ -78,6 +79,71 @@ export interface PublicCharacterProfile {
 export interface TeamUnit {
   slot_no: number
   class_id: CharacterClassId
+}
+
+export type DashboardSubmissionStatus = 'pending_compile' | 'compiling' | 'compiled' | 'compile_failed' | 'rejected'
+
+export interface DashboardActiveCodeSummary {
+  version_no: number
+  ai_model: string | null
+  agent_contract_version: string
+}
+
+export interface DashboardLatestSubmissionSummary {
+  version_no: number
+  status: DashboardSubmissionStatus
+}
+
+export interface DashboardRankedResults {
+  wins: number
+  draws: number
+  losses: number
+}
+
+export interface DashboardBattleReadiness {
+  practice: {
+    can_request: boolean
+    blocking_reason: 'active_battle' | 'team_code_required' | 'compiling' | 'content_restricted' | null
+  }
+  ranked: {
+    can_request: boolean
+    blocking_reason: 'active_battle' | 'team_code_required' | 'compiling' | 'content_restricted' | null
+  }
+}
+
+export interface DashboardCharacterSummary {
+  public_id: string
+  slot_no: number
+  name: string
+  status?: ContentStatus
+  class_id: CharacterClassId
+  code_source: 'default' | 'custom'
+  created_at: string
+  active_code: DashboardActiveCodeSummary | null
+  ranked_rating: number
+  ranked_results: DashboardRankedResults
+  latest_submission: DashboardLatestSubmissionSummary | null
+  battle_readiness: DashboardBattleReadiness
+}
+
+export interface DashboardTeamSummary {
+  public_id: string
+  slot_no: number
+  name: string
+  status?: ContentStatus
+  units: TeamUnit[]
+  code_source: 'none' | 'custom'
+  created_at: string
+  active_code: DashboardActiveCodeSummary | null
+  ranked_rating: number
+  ranked_results: DashboardRankedResults
+  latest_submission: DashboardLatestSubmissionSummary | null
+  battle_readiness: DashboardBattleReadiness
+}
+
+export interface DashboardSummary {
+  characters: DashboardCharacterSummary[]
+  teams: DashboardTeamSummary[]
 }
 
 export interface Team {
@@ -239,6 +305,7 @@ export class AgentDuelIntegrationError extends Error {
 
 interface RequestOptions extends Omit<RequestInit, 'credentials' | 'headers'> {
   headers?: HeadersInit
+  locale?: IntegrationLocale
   turnstileToken?: string
   retryGet?: boolean
 }
@@ -257,7 +324,7 @@ export async function agentDuelRequest<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { retryGet = true, turnstileToken, ...requestInit } = options
+  const { locale = 'zh-CN', retryGet = true, turnstileToken, ...requestInit } = options
   const method = requestInit.method ?? 'GET'
   const mayRetry = method === 'GET' && retryGet
 
@@ -265,7 +332,7 @@ export async function agentDuelRequest<T>(
     try {
       const headers = new Headers(options.headers)
       headers.set('Accept', 'application/json')
-      headers.set('Accept-Language', 'zh-CN')
+      headers.set('Accept-Language', locale)
       if (path.startsWith('/api/integrations')) {
         headers.set('AgentDuel-Type', AGENTDUEL_TYPE)
         headers.set('AgentDuel-Plugin-Version', AGENTDUEL_PLUGIN_VERSION)
@@ -322,6 +389,18 @@ export async function fetchCharacters(appKey: string, signal?: AbortSignal): Pro
     { signal }
   )
   return [...data.characters].sort((left, right) => left.slot_no - right.slot_no)
+}
+
+export async function fetchDashboardSummary(
+  appKey: string,
+  locale: IntegrationLocale,
+  signal?: AbortSignal
+): Promise<DashboardSummary> {
+  return await agentDuelRequest<DashboardSummary>(
+    appKey,
+    '/api/integrations/dashboard/summary',
+    { locale, signal }
+  )
 }
 
 export async function fetchTeams(appKey: string, signal?: AbortSignal): Promise<Team[]> {
@@ -513,16 +592,13 @@ export async function updateTeamBadgeDisplay(
 export async function fetchMaps(
   appKey: string,
   mode: GameModeId,
-  participantPublicId?: string,
+  locale: IntegrationLocale,
   signal?: AbortSignal
 ): Promise<BattleMap[]> {
-  const params = new URLSearchParams()
-  if (participantPublicId) params.set('participant_public_id', participantPublicId)
-  const suffix = params.size > 0 ? `?${params.toString()}` : ''
   const data = await agentDuelRequest<{ maps: BattleMap[] }>(
     appKey,
-    `/api/integrations/game-modes/${mode}/maps${suffix}`,
-    { signal }
+    `/api/integrations/game-modes/${mode}/maps`,
+    { locale, signal }
   )
   return data.maps
 }
@@ -531,6 +607,7 @@ export async function searchBattleTargets(
   appKey: string,
   mode: GameModeId,
   query: string,
+  locale: IntegrationLocale,
   signal?: AbortSignal
 ): Promise<BattleTarget[]> {
   const params = new URLSearchParams({ q: query.trim() })
@@ -538,7 +615,7 @@ export async function searchBattleTargets(
   const data = await agentDuelRequest<{ characters?: BattleTarget[]; teams?: BattleTarget[] }>(
     appKey,
     `/api/integrations/${resource}/search?${params.toString()}`,
-    { signal }
+    { locale, signal }
   )
   return mode === 'deathmatch' ? data.characters ?? [] : data.teams ?? []
 }
@@ -570,12 +647,14 @@ export async function startBattle(
   appKey: string,
   input: Parameters<typeof createBattleRequestBody>[0],
   turnstileToken: string,
+  locale: IntegrationLocale,
   signal?: AbortSignal
 ): Promise<Battle> {
   const data = await agentDuelRequest<{ battle: Battle }>(appKey, '/api/integrations/battles', {
     method: 'POST',
     body: JSON.stringify(createBattleRequestBody(input)),
     turnstileToken,
+    locale,
     signal,
     retryGet: false
   })

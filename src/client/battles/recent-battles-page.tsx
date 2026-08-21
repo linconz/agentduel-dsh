@@ -14,20 +14,23 @@ import { useMemo } from 'react'
 import {
   WEBSITE_BASE_URL,
   type BattlePage,
-  type Character,
-  type GameModeId,
-  type Team
+  type DashboardSummary,
+  type GameModeId
 } from '../api/client.js'
 import { toCaptureTheFlagError } from '../capture-the-flag/errors.js'
 import { toDeathmodeError } from '../deathmatch/errors.js'
 import { useModuleLink } from '../shared/module-link.js'
-import type { OwnedEntitiesPageProps } from '../shared/page-types.js'
+import type { DashboardSummaryCache } from '../shared/dashboard-summary-cache.js'
+import type { BasicPageProps } from '../shared/page-types.js'
 import { useRequestScope, type RequestScope } from '../shared/request-scope.js'
 import { routeHref } from '../shell/routes.js'
 import { getRevengeHref, toCaptureTheFlagBattle, toDeathmatchBattle } from './presenters.js'
 import type { RecentBattlesCache, RecentBattlesQuery } from './recent-battles-cache.js'
 
-type RecentModePageProps = OwnedEntitiesPageProps & { recentBattles: RecentBattlesCache }
+type RecentModePageProps = BasicPageProps & {
+  dashboardSummary: DashboardSummaryCache
+  recentBattles: RecentBattlesCache
+}
 
 export type RecentBattlesPageProps = RecentModePageProps & { mode: GameModeId }
 
@@ -37,20 +40,20 @@ export function RecentBattlesPage(props: RecentBattlesPageProps): React.JSX.Elem
     : <CaptureTheFlagRecentBattles {...props} />
 }
 
-function DeathmatchRecentBattles({ appKey, navigation, ownedEntities, recentBattles }: RecentModePageProps): React.JSX.Element {
+function DeathmatchRecentBattles({ appKey, dashboardSummary, navigation, recentBattles }: RecentModePageProps): React.JSX.Element {
   const scope = useRequestScope()
   const Link = useModuleLink(navigation)
   const dataSource = useMemo<DeathmatchRecentBattlesDataSource>(() => {
-    let charactersPromise: Promise<Character[]> | undefined
-    const loadCharacters = (): Promise<Character[]> => (
-      charactersPromise ??= scope.run((signal) => ownedEntities.getCharacters(appKey, signal))
+    let summaryPromise: Promise<DashboardSummary> | undefined
+    const loadSummary = (): Promise<DashboardSummary> => (
+      summaryPromise ??= scope.run((signal) => dashboardSummary.get(appKey, 'zh-CN', signal))
     )
     const loadBattlePage = createAccountBattlePageLoader(appKey, 'deathmatch', scope, recentBattles)
     return {
       async loadContext() {
         try {
-          const characters = await loadCharacters()
-          return { ownedCharacterPublicIds: characters.map((character) => character.public_id) }
+          const summary = await loadSummary()
+          return { ownedCharacterPublicIds: summary.characters.map((character) => character.public_id) }
         } catch (error) { throw toDeathmodeError(error) }
       },
       async loadBattles(query: DeathmatchBattleRecordsQuery) {
@@ -66,7 +69,7 @@ function DeathmatchRecentBattles({ appKey, navigation, ownedEntities, recentBatt
         } catch (error) { throw toDeathmodeError(error) }
       }
     }
-  }, [appKey, ownedEntities, recentBattles, scope])
+  }, [appKey, dashboardSummary, recentBattles, scope])
 
   return (
     <div className="agentduel-recent-battles-shell">
@@ -87,20 +90,20 @@ function DeathmatchRecentBattles({ appKey, navigation, ownedEntities, recentBatt
   )
 }
 
-function CaptureTheFlagRecentBattles({ appKey, navigation, ownedEntities, recentBattles }: RecentModePageProps): React.JSX.Element {
+function CaptureTheFlagRecentBattles({ appKey, dashboardSummary, navigation, recentBattles }: RecentModePageProps): React.JSX.Element {
   const scope = useRequestScope()
   const Link = useModuleLink(navigation)
   const dataSource = useMemo<CaptureTheFlagRecentBattlesDataSource>(() => {
-    let teamsPromise: Promise<Team[]> | undefined
-    const loadTeams = (): Promise<Team[]> => (
-      teamsPromise ??= scope.run((signal) => ownedEntities.getTeams(appKey, signal))
+    let summaryPromise: Promise<DashboardSummary> | undefined
+    const loadSummary = (): Promise<DashboardSummary> => (
+      summaryPromise ??= scope.run((signal) => dashboardSummary.get(appKey, 'zh-CN', signal))
     )
     const loadBattlePage = createAccountBattlePageLoader(appKey, 'captureTheFlag', scope, recentBattles)
     return {
       async loadContext() {
         try {
-          const teams = await loadTeams()
-          return { ownedTeamPublicIds: teams.map((team) => team.public_id) }
+          const summary = await loadSummary()
+          return { ownedTeamPublicIds: summary.teams.map((team) => team.public_id) }
         } catch (error) { throw toCaptureTheFlagError(error) }
       },
       async loadBattles(query: CaptureTheFlagBattleRecordsQuery) {
@@ -116,7 +119,7 @@ function CaptureTheFlagRecentBattles({ appKey, navigation, ownedEntities, recent
         } catch (error) { throw toCaptureTheFlagError(error) }
       }
     }
-  }, [appKey, ownedEntities, recentBattles, scope])
+  }, [appKey, dashboardSummary, recentBattles, scope])
 
   return (
     <div className="agentduel-recent-battles-shell">

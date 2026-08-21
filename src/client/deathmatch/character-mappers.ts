@@ -1,10 +1,15 @@
-import type { DeathmatchCharacterListItem } from '@agentduel/deathmode/character-list'
-import type { Character, VersionSummary } from '../api/client.js'
-import { rankedResults } from '../shared/ranked-results.js'
+import type {
+  CharacterListLatestSubmission,
+  DeathmatchCharacterListItem
+} from '@agentduel/deathmode/character-list'
+import type {
+  Character,
+  DashboardCharacterSummary,
+  DashboardLatestSubmissionSummary
+} from '../api/client.js'
 
 export function mapCharacterListItem(
-  character: Character,
-  version: VersionSummary | null
+  character: DashboardCharacterSummary
 ): DeathmatchCharacterListItem {
   return {
     public_id: character.public_id,
@@ -12,13 +17,23 @@ export function mapCharacterListItem(
     status: character.status,
     class_id: character.class_id,
     created_at: character.created_at,
-    active_code: version === null
+    active_code: character.active_code === null
       ? null
-      : { version_no: version.version_no, ai_model: version.ai_model },
+      : {
+          version_no: character.active_code.version_no,
+          ai_model: character.active_code.ai_model
+        },
     ranked_rating: character.ranked_rating,
-    ranked_results: rankedResults(character),
-    latest_submission: null
+    ranked_results: character.ranked_results,
+    latest_submission: mapLatestSubmission(character.latest_submission)
   }
+}
+
+function mapLatestSubmission(
+  submission: DashboardLatestSubmissionSummary | null
+): CharacterListLatestSubmission | null {
+  if (submission === null || submission.status === 'compiled') return null
+  return { version_no: submission.version_no, status: submission.status }
 }
 
 export function toDeathmodeCharacter(character: Character) {

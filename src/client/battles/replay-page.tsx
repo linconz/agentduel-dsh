@@ -19,6 +19,7 @@ import {
 import { AgentCodeOptimization } from '../conversations/code-optimization.js'
 import type { AgentConversationService } from '../conversations/service.js'
 import { useModuleLink } from '../shared/module-link.js'
+import type { DashboardSummaryCache } from '../shared/dashboard-summary-cache.js'
 import type { OwnedEntitiesPageProps } from '../shared/page-types.js'
 import { refreshOwnedEntitiesAfterCompletedBattle } from '../shared/owned-entities-cache.js'
 import { routeHref } from '../shell/routes.js'
@@ -30,6 +31,7 @@ type ReplayPageProps = OwnedEntitiesPageProps
   & Pick<PropsRuntime<'conversation'>, 'useSessions' | 'useWorkspaces'>
   & {
     conversations: AgentConversationService
+    dashboardSummary: DashboardSummaryCache
     onConversationSubmitted: (sessionId: SessionId) => void
     publicId: string
     recentBattles: RecentBattlesCache
@@ -38,6 +40,7 @@ type ReplayPageProps = OwnedEntitiesPageProps
 export function ReplayPage({
   appKey,
   conversations,
+  dashboardSummary,
   navigation,
   ownedEntities,
   onConversationSubmitted,
@@ -82,6 +85,7 @@ export function ReplayPage({
         }
         refreshOwnedEntitiesAfterCompletedBattle(ownedEntities, appKey, battle.status)
         refreshRecentBattlesAfterCompletedBattle(recentBattles, appKey, battle.game_mode_id, battle.status)
+        if (battle.status === 'done') dashboardSummary.refresh(appKey, 'zh-CN')
         if (battle.status !== 'done' || !battle.replay_url) {
           setState({ status: 'unavailable', battle, message: '这场战斗当前没有可用回放。' })
           return
@@ -122,7 +126,7 @@ export function ReplayPage({
       disposed = true
       controller.abort()
     }
-  }, [appKey, navigation, ownedEntities, publicId, recentBattles, reloadKey])
+  }, [appKey, dashboardSummary, navigation, ownedEntities, publicId, recentBattles, reloadKey])
 
   if (state.status === 'ready') {
     const startAgainSearch = getStartAgainSearch(state.battle, state.ownPublicId)

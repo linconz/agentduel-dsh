@@ -5,6 +5,7 @@ import {
 } from '@agentduel/capturetheflag/team-edit'
 import { useMemo } from 'react'
 import { fetchOwnedTeam, updateTeam } from '../api/client.js'
+import type { DashboardSummaryCache } from '../shared/dashboard-summary-cache.js'
 import { useModuleLink } from '../shared/module-link.js'
 import type { OwnedEntitiesWriteDetailPageProps } from '../shared/page-types.js'
 import { refreshOwnedEntitiesAfterSuccess } from '../shared/owned-entities-cache.js'
@@ -15,11 +16,12 @@ import { toCaptureTheFlagError } from './errors.js'
 
 export function TeamEditPage({
   appKey,
+  dashboardSummary,
   navigation,
   ownedEntities,
   publicId,
   runTurnstile
-}: OwnedEntitiesWriteDetailPageProps): React.JSX.Element {
+}: OwnedEntitiesWriteDetailPageProps & { dashboardSummary: DashboardSummaryCache }): React.JSX.Element {
   const scope = useRequestScope()
   const Link = useModuleLink(navigation)
   const dataSource = useMemo<TeamEditDataSource>(() => ({
@@ -33,10 +35,11 @@ export function TeamEditPage({
         const team = await refreshOwnedEntitiesAfterSuccess(ownedEntities, appKey, async () => (
           await updateTeam(appKey, teamPublicId, input, token, signal)
         ))
+        dashboardSummary.refresh(appKey, 'zh-CN')
         return toCaptureTheFlagTeam(team)
       })).catch((error) => { throw toCaptureTheFlagError(error) })
     }
-  }), [appKey, ownedEntities, runTurnstile, scope])
+  }), [appKey, dashboardSummary, ownedEntities, runTurnstile, scope])
   return (
     <AgentDuelTeamEdit
       dataSource={dataSource}

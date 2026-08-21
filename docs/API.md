@@ -40,6 +40,8 @@ App Key 代表用户的 AgentDuel 账户。
 除 `POST /api/integrations/check` 外，所有接口都要求：
 
 ```http
+AgentDuel-Type: dsh
+AgentDuel-Plugin-Version: 0.1.0
 Authorization: Bearer agent_A1b2C3d4E5f6G7h8
 Accept: application/json
 Accept-Language: zh-CN
@@ -118,7 +120,7 @@ const widgetId = window.turnstile.render(container, {
 - `Access-Control-Allow-Origin: *`
 - 不返回 `Access-Control-Allow-Credentials`
 - 允许 `GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`OPTIONS`
-- 允许 `Authorization`、`Content-Type`、`Accept-Language`、`X-Turnstile-Token`
+- 允许 `Authorization`、`AgentDuel-Type`、`AgentDuel-Plugin-Version`、`Content-Type`、`Accept-Language`、`X-Turnstile-Token`
 - 向浏览器暴露 `Retry-After`
 - 合法的 `OPTIONS` 预检返回 `204`，不要求 App Key
 
@@ -161,6 +163,8 @@ export async function agentDuelRequest<T>(
 ): Promise<T> {
   const { turnstileToken, ...requestInit } = options;
   const headers = new Headers(requestInit.headers);
+  headers.set("AgentDuel-Type", "dsh");
+  headers.set("AgentDuel-Plugin-Version", "0.1.0");
   headers.set("Accept", "application/json");
   headers.set("Accept-Language", locale);
   headers.set("Authorization", `Bearer ${appKey}`);
@@ -198,6 +202,7 @@ export async function agentDuelRequest<T>(
 | 方法与路径 | 用途 |
 | --- | --- |
 | `POST /api/integrations/check` | 校验用户填写的 App Key |
+| `GET /api/integrations/dashboard/summary` | 获取 App Key 所属账户的完整备战室摘要 |
 | `GET /api/integrations/classes` | 获取当前可用职业 |
 | `GET /api/integrations/characters` | 获取当前账户的角色列表 |
 | `GET /api/integrations/characters/search?q=` | 搜索可挑战角色 |
@@ -226,7 +231,185 @@ export async function agentDuelRequest<T>(
 
 所有 JSON 字段使用 `snake_case`。所有时间字段均为 ISO 8601 字符串。
 
-### 7.1 内容状态
+### 7.1 Dashboard 摘要
+
+`GET /api/integrations/dashboard/summary` 不接受 query 参数或请求体，不分页、不返回 cursor，也不需要 Turnstile。它是只读且天然幂等的接口，使用 App Key 所属账户读取数据，并与网页 `GET /api/dashboard/summary` 返回完全相同的 `DashboardSummary` 响应：包含 `user`（含 `primary_email`）、角色和队伍、活动和最近对战以及 `attention_items`。统计口径、排序、字段语义与缓存策略均与网页摘要一致。
+
+缺少或无效 App Key 返回 `401 INVALID_INTEGRATION_APP_KEY`；缺少或不支持的客户端类型、插件版本分别返回 `403 INVALID_AGENTDUEL_TYPE`、`403 INVALID_AGENTDUEL_PLUGIN_VERSION`；其他错误使用通用错误结构。
+
+成功返回 HTTP `200`：
+
+```json
+{
+  "user": {
+    "public_id": "00000000-0000-4000-8000-000000000001",
+    "primary_email": "user@example.com",
+    "display_name": "Duelist",
+    "account_type": "email_password"
+  },
+  "character_count": 2,
+  "max_character_slots": 10,
+  "team_count": 1,
+  "max_team_slots": 10,
+  "characters": [
+    {
+      "public_id": "00000000-0000-4000-8000-000000000011",
+      "slot_no": 1,
+      "name": "火法",
+      "class_id": "mage",
+      "code_source": "custom",
+      "created_at": "2026-06-20T00:00:00.000Z",
+      "last_battle_at": "2026-06-25T00:00:00.000Z",
+      "last_initiated_battle_at": "2026-06-25T00:00:00.000Z",
+      "active_code": {
+        "version_no": 2,
+        "ai_model": "gpt-5",
+        "agent_contract_version": "0.1.0",
+        "completed_at": "2026-06-24T00:01:00.000Z"
+      },
+      "ranked_rating": 840,
+      "battle_counts": {
+        "practice": 3,
+        "ranked": 8
+      },
+      "battle_results": {
+        "wins": 5,
+        "draws": 2,
+        "losses": 4
+      },
+      "ranked_results": {
+        "wins": 5,
+        "draws": 1,
+        "losses": 2
+      },
+      "updated_at": "2026-06-25T00:00:00.000Z",
+      "latest_submission": {
+        "public_id": "00000000-0000-4000-8000-000000000101",
+        "version_no": 3,
+        "status": "compile_failed",
+        "diagnostics": [
+          {
+            "stage": "compile",
+            "code": "TS_ERROR",
+            "message": "TypeScript 编译失败"
+          }
+        ],
+        "ai_model": "gpt-5",
+        "change_summary": "优化索敌逻辑",
+        "compiler_version": "ts-5.0.0",
+        "agent_contract_version": "0.1.0",
+        "completed_at": "2026-06-25T00:01:00.000Z",
+        "created_at": "2026-06-25T00:00:00.000Z"
+      },
+      "battle_readiness": {
+        "practice": { "can_request": false, "blocking_reason": "active_battle" },
+        "ranked": { "can_request": false, "blocking_reason": "active_battle" }
+      }
+    }
+  ],
+  "teams": [
+    {
+      "public_id": "00000000-0000-4000-8000-000000000021",
+      "slot_no": 1,
+      "name": "双猎小队",
+      "units": [
+        { "slot_no": 1, "class_id": "hunter" },
+        { "slot_no": 2, "class_id": "hunter" }
+      ],
+      "code_source": "custom",
+      "created_at": "2026-06-21T00:00:00.000Z",
+      "last_battle_at": null,
+      "last_initiated_battle_at": null,
+      "active_code": {
+        "version_no": 2,
+        "ai_model": "gpt-5",
+        "agent_contract_version": "0.1.0",
+        "completed_at": "2026-06-24T00:01:00.000Z"
+      },
+      "ranked_rating": 860,
+      "battle_counts": {
+        "practice": 1,
+        "ranked": 4
+      },
+      "battle_results": {
+        "wins": 2,
+        "draws": 1,
+        "losses": 2
+      },
+      "ranked_results": {
+        "wins": 2,
+        "draws": 1,
+        "losses": 1
+      },
+      "updated_at": "2026-06-25T00:00:00.000Z",
+      "latest_submission": null,
+      "battle_readiness": {
+        "practice": { "can_request": true, "blocking_reason": null },
+        "ranked": { "can_request": true, "blocking_reason": null }
+      }
+    }
+  ],
+  "active_battles": {
+    "deathmatch": {
+      "public_id": "00000000-0000-4000-8000-000000000201",
+      "share_path": null,
+      "purpose": "pvp",
+      "battle_type": "practice",
+      "game_mode_id": "deathmatch",
+      "map_id": "default_arena",
+      "map_asset_path": "/resources/v1/map/basic-map.tmj",
+      "status": "running",
+      "seed": "a1b2c3d4e5f60708",
+      "participants": [],
+      "winner_side": null,
+      "finish_reason": null,
+      "red_duration_ms": null,
+      "blue_duration_ms": null,
+      "engine_version": null,
+      "replay_available": false,
+      "created_at": "2026-06-25T00:00:00.000Z",
+      "started_at": "2026-06-25T00:00:01.000Z",
+      "finished_at": null
+    },
+    "capture_the_flag": null
+  },
+  "recent_battles": {
+    "deathmatch": {
+      "practice": [],
+      "ranked": []
+    },
+    "capture_the_flag": {
+      "practice": [],
+      "ranked": []
+    }
+  },
+  "attention_items": [
+    {
+      "kind": "character_compile_failed",
+      "severity": "error",
+      "target_kind": "character",
+      "target_public_id": "00000000-0000-4000-8000-000000000011",
+      "code": "DASHBOARD_CHARACTER_COMPILE_FAILED",
+      "submission": {
+        "public_id": "00000000-0000-4000-8000-000000000101",
+        "version_no": 3,
+        "status": "compile_failed",
+        "completed_at": "2026-06-25T00:01:00.000Z",
+        "created_at": "2026-06-25T00:00:00.000Z"
+      }
+    },
+    {
+      "kind": "active_battle",
+      "severity": "info",
+      "target_kind": "battle",
+      "target_public_id": "00000000-0000-4000-8000-000000000201",
+      "code": "DASHBOARD_ACTIVE_BATTLE"
+    }
+  ]
+}
+```
+
+### 7.2 内容状态
 
 ```ts
 type ContentStatus =
@@ -527,6 +710,8 @@ async function checkAppKey(appKey: string, turnstileToken: string): Promise<bool
     method: "POST",
     credentials: "omit",
     headers: {
+      "AgentDuel-Type": "dsh",
+      "AgentDuel-Plugin-Version": "0.1.0",
       "Content-Type": "application/json",
       "Accept-Language": "zh-CN",
       "X-Turnstile-Token": turnstileToken
@@ -537,6 +722,12 @@ async function checkAppKey(appKey: string, turnstileToken: string): Promise<bool
   return ((await response.json()) as { valid: boolean }).valid;
 }
 ```
+
+### `GET /api/integrations/dashboard/summary`
+
+读取 App Key 所属账户的完整备战室摘要。请求仅使用第 3 节的 App Key 与客户端 header，不接受 Session Cookie 作为替代，也不需要 Turnstile、query 参数或请求体。
+
+成功返回 HTTP `200`，响应与 `GET /api/dashboard/summary` 完全一致，字段示例和完整统计口径见 `docs/RESTful API.md` 的“备战室摘要”章节。该响应包含账户 `public_id`、`primary_email`、`display_name` 和 `account_type`，供已获账户授权的集成客户端展示当前账户摘要。
 
 ## 10. 职业和角色
 
@@ -1011,7 +1202,7 @@ interface OwnedTeamResponse {
 
 ### 13.2 Query 和分页
 
-`GET /api/integrations/battles`
+`GET /api/integrations/battles` 完整复用 `GET /api/battles` 的查询参数：
 
 | Query | 类型 | 说明 |
 | --- | --- | --- |
@@ -1133,6 +1324,6 @@ interface AgentDuelErrorBody {
 - 角色或团队 Agent 源码提交、编译状态、版本列表或版本切换。
 - 角色或团队删除。
 - 角色或团队自身 `char_` / `team_` API Key 轮换。
-- 用户账号资料、邮箱、密码或登录状态管理。
+- 用户账号资料的修改、邮箱或密码管理、登录状态管理；`GET /api/integrations/dashboard/summary` 仅提供当前账户的只读摘要字段。
 
 客户端不得自行猜测或调用未在本文列出的 `/api/integrations` 路径。

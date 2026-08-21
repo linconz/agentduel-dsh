@@ -1,10 +1,15 @@
-import type { CaptureTheFlagTeamListItem } from '@agentduel/capturetheflag/team-list'
-import type { Team, VersionSummary } from '../api/client.js'
-import { rankedResults } from '../shared/ranked-results.js'
+import type {
+  CaptureTheFlagTeamListItem,
+  TeamListLatestSubmission
+} from '@agentduel/capturetheflag/team-list'
+import type {
+  DashboardLatestSubmissionSummary,
+  DashboardTeamSummary,
+  Team
+} from '../api/client.js'
 
 export function mapTeamListItem(
-  team: Team,
-  version: VersionSummary | null
+  team: DashboardTeamSummary
 ): CaptureTheFlagTeamListItem {
   return {
     public_id: team.public_id,
@@ -12,13 +17,23 @@ export function mapTeamListItem(
     status: team.status,
     units: team.units,
     created_at: team.created_at,
-    active_code: version === null
+    active_code: team.active_code === null
       ? null
-      : { version_no: version.version_no, ai_model: version.ai_model },
+      : {
+          version_no: team.active_code.version_no,
+          ai_model: team.active_code.ai_model
+        },
     ranked_rating: team.ranked_rating,
-    ranked_results: rankedResults(team),
-    latest_submission: null
+    ranked_results: team.ranked_results,
+    latest_submission: mapLatestSubmission(team.latest_submission)
   }
+}
+
+function mapLatestSubmission(
+  submission: DashboardLatestSubmissionSummary | null
+): TeamListLatestSubmission | null {
+  if (submission === null || submission.status === 'compiled') return null
+  return { version_no: submission.version_no, status: submission.status }
 }
 
 export function toCaptureTheFlagTeam(team: Team) {

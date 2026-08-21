@@ -5,15 +5,20 @@ import {
   useUnauthorizedEffect
 } from '../shared/load-state.js'
 import { useModuleLink } from '../shared/module-link.js'
-import type { OwnedEntitiesPageProps } from '../shared/page-types.js'
+import type { DashboardSummaryCache } from '../shared/dashboard-summary-cache.js'
+import type { BasicPageProps } from '../shared/page-types.js'
 import { routeHref } from '../shell/routes.js'
 import { mapTeamListItem } from './team-mappers.js'
 
-export function TeamListPage({ appKey, navigation, ownedEntities }: OwnedEntitiesPageProps): React.JSX.Element {
+export function TeamListPage({
+  appKey,
+  dashboardSummary,
+  navigation
+}: BasicPageProps & { dashboardSummary: DashboardSummaryCache }): React.JSX.Element {
   const [state, reload] = useLoadState(
-    async (signal) => await ownedEntities.getTeamList(appKey, signal),
-    [appKey, ownedEntities],
-    () => ownedEntities.peekTeamList(appKey)
+    async (signal) => await dashboardSummary.get(appKey, 'zh-CN', signal),
+    [appKey, dashboardSummary],
+    () => dashboardSummary.peek(appKey)
   )
   useUnauthorizedEffect(state.error, navigation)
   const Link = useModuleLink(navigation)
@@ -27,10 +32,7 @@ export function TeamListPage({ appKey, navigation, ownedEntities }: OwnedEntitie
         i18nMode="bundled"
         linkComponent={Link}
         locale="zh-CN"
-        teams={state.value.teams.map(team => mapTeamListItem(
-          team,
-          state.value.versions.get(team.public_id) ?? null
-        ))}
+        teams={state.value.teams.map(mapTeamListItem)}
       />
     </div>
   )

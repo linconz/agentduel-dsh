@@ -13,68 +13,6 @@ afterEach(() => {
 })
 
 describe('本人角色与团队缓存', () => {
-  it('完整版本摘要返回前不暴露列表快照，完成后同步命中真实模型数据', async () => {
-    const characterVersion = deferred<{ version_no: number; ai_model: string; change_summary: null } | null>()
-    const teamVersion = deferred<{ version_no: number; ai_model: string; change_summary: null } | null>()
-    const ownedCharacter = activeCharacter('character-1')
-    const ownedTeam = activeTeam('team-1')
-    const loadCharacterVersion = vi.fn(() => characterVersion.promise)
-    const loadTeamVersion = vi.fn(() => teamVersion.promise)
-    const cache = createOwnedEntitiesCache({
-      loadCharacters: async () => [ownedCharacter],
-      loadTeams: async () => [ownedTeam],
-      loadCharacterVersion,
-      loadTeamVersion
-    })
-    cache.setAppKey('agent_key')
-
-    const characterList = cache.getCharacterList('agent_key')
-    const teamList = cache.getTeamList('agent_key')
-    await flushMicrotasks()
-    expect(cache.peekCharacterList('agent_key')).toBeNull()
-    expect(cache.peekTeamList('agent_key')).toBeNull()
-
-    characterVersion.resolve({ version_no: 3, ai_model: 'deepseek-v3', change_summary: null })
-    teamVersion.resolve({ version_no: 5, ai_model: 'deepseek-r1', change_summary: null })
-    await expect(characterList).resolves.toMatchObject({ characters: [ownedCharacter] })
-    await expect(teamList).resolves.toMatchObject({ teams: [ownedTeam] })
-
-    expect(cache.peekCharacterList('agent_key')?.versions.get('character-1')).toMatchObject({
-      version_no: 3,
-      ai_model: 'deepseek-v3'
-    })
-    expect(cache.peekTeamList('agent_key')?.versions.get('team-1')).toMatchObject({
-      version_no: 5,
-      ai_model: 'deepseek-r1'
-    })
-
-    await cache.getCharacterList('agent_key')
-    await cache.getTeamList('agent_key')
-    expect(loadCharacterVersion).toHaveBeenCalledTimes(1)
-    expect(loadTeamVersion).toHaveBeenCalledTimes(1)
-  })
-
-  it('非 active 对象以真实的空版本写入完整快照，不请求版本接口', async () => {
-    const inactiveCharacter = { ...activeCharacter('character-inactive'), status: 'suspended' as const }
-    const inactiveTeam = { ...activeTeam('team-inactive'), status: 'suspended' as const }
-    const loadCharacterVersion = vi.fn()
-    const loadTeamVersion = vi.fn()
-    const cache = createOwnedEntitiesCache({
-      loadCharacters: async () => [inactiveCharacter],
-      loadTeams: async () => [inactiveTeam],
-      loadCharacterVersion,
-      loadTeamVersion
-    })
-    cache.setAppKey('agent_key')
-
-    await cache.getCharacterList('agent_key')
-    await cache.getTeamList('agent_key')
-    expect(cache.peekCharacterList('agent_key')?.versions.get('character-inactive')).toBeNull()
-    expect(cache.peekTeamList('agent_key')?.versions.get('team-inactive')).toBeNull()
-    expect(loadCharacterVersion).not.toHaveBeenCalled()
-    expect(loadTeamVersion).not.toHaveBeenCalled()
-  })
-
   it('并行预热两类数据，并从各自成功时刻计算两分钟 TTL', async () => {
     let now = 1_000
     const firstCharacters = deferred<Character[]>()
@@ -279,14 +217,13 @@ describe('本人角色与团队缓存', () => {
 })
 
 describe('本人角色与团队刷新时序', () => {
-  it('绑定已有 Key、新 Key、重置与卸载生命周期', () => {
+  it('绑定已有 Key、新 Key、重置与卸载生命周期时不主动预热业务页面数据', () => {
     let appKey: string | null = 'agent_existing'
     const listeners = new Set<() => void>()
     const setAppKey = vi.fn()
-    const prefetchAll = vi.fn()
     const dispose = vi.fn()
     const unbind = bindOwnedEntitiesCache(
-      { setAppKey, prefetchAll, dispose },
+      { setAppKey, dispose },
       {
         getSnapshot: () => ({ appKey }),
         subscribe: (listener) => {
@@ -297,20 +234,18 @@ describe('本人角色与团队刷新时序', () => {
     )
 
     expect(setAppKey).toHaveBeenLastCalledWith('agent_existing')
-    expect(prefetchAll).toHaveBeenLastCalledWith('agent_existing')
 
     for (const listener of listeners) listener()
-    expect(prefetchAll).toHaveBeenCalledTimes(1)
+    expect(setAppKey).toHaveBeenCalledTimes(1)
 
     appKey = null
     for (const listener of listeners) listener()
     expect(setAppKey).toHaveBeenLastCalledWith(null)
-    expect(prefetchAll).toHaveBeenCalledTimes(1)
 
     appKey = 'agent_new'
     for (const listener of listeners) listener()
     expect(setAppKey).toHaveBeenLastCalledWith('agent_new')
-    expect(prefetchAll).toHaveBeenLastCalledWith('agent_new')
+    expect(setAppKey).toHaveBeenCalledTimes(3)
 
     unbind()
     expect(dispose).toHaveBeenCalledTimes(1)
@@ -355,24 +290,6 @@ function character(publicId: string): Character {
 
 function team(publicId: string): Team {
   return { public_id: publicId } as Team
-}
-
-function activeCharacter(publicId: string): Character {
-  return {
-    public_id: publicId,
-    status: 'active',
-    updated_at: '2026-08-20T00:00:00.000Z',
-    code_source: 'custom'
-  } as Character
-}
-
-function activeTeam(publicId: string): Team {
-  return {
-    public_id: publicId,
-    status: 'active',
-    updated_at: '2026-08-20T00:00:00.000Z',
-    code_source: 'custom'
-  } as Team
 }
 
 interface Deferred<T> {

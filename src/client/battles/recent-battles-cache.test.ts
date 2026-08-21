@@ -20,7 +20,7 @@ afterEach(() => {
 })
 
 describe('最近战斗缓存', () => {
-  it('按查询合并并发请求，两分钟内命中，过期后重新读取', async () => {
+  it('按查询合并并发请求，两分钟内命中，过期后先返回旧数据并静默更新', async () => {
     let now = 1_000
     const firstRequest = deferred<BattlePage>()
     const firstPage = battlePage('battle-old')
@@ -45,8 +45,10 @@ describe('最近战斗缓存', () => {
     expect(loadBattlePage).toHaveBeenCalledTimes(1)
 
     now += 1
-    await expect(cache.getBattlePage('agent_key', 'deathmatch', DEFAULT_QUERY)).resolves.toBe(secondPage)
+    await expect(cache.getBattlePage('agent_key', 'deathmatch', DEFAULT_QUERY)).resolves.toBe(firstPage)
     expect(loadBattlePage).toHaveBeenCalledTimes(2)
+    await flushMicrotasks()
+    await expect(cache.getBattlePage('agent_key', 'deathmatch', DEFAULT_QUERY)).resolves.toBe(secondPage)
   })
 
   it('玩法、游标与筛选条件分别缓存，筛选数组顺序不影响键', async () => {
@@ -70,7 +72,7 @@ describe('最近战斗缓存', () => {
     expect(loadBattlePage).toHaveBeenCalledTimes(3)
   })
 
-  it('提交成功后只清空缓存，不立即请求；提交失败不清空', async () => {
+  it('提交成功后只把缓存标记为过期，不立即请求；提交失败不失效', async () => {
     const clear = vi.fn()
     await expect(clearRecentBattlesAfterSuccess({ clear }, 'agent_key', async () => 'battle-id')).resolves.toBe('battle-id')
     expect(clear).toHaveBeenCalledTimes(1)
@@ -95,7 +97,7 @@ describe('最近战斗缓存', () => {
     expect(refreshDefault).toHaveBeenCalledWith('agent_key', 'captureTheFlag')
   })
 
-  it('done 强制替换对应玩法缓存并保留另一玩法缓存', async () => {
+  it('done 保留旧数据并静默替换对应玩法缓存，同时保留另一玩法缓存', async () => {
     const loadBattlePage = vi.fn()
       .mockResolvedValueOnce(battlePage('death-old'))
       .mockResolvedValueOnce(battlePage('ctf-old'))
@@ -106,8 +108,10 @@ describe('最近战斗缓存', () => {
     const ctfPage = await cache.getBattlePage('agent_key', 'captureTheFlag', DEFAULT_QUERY)
 
     cache.refreshDefault('agent_key', 'deathmatch')
-    await flushMicrotasks()
-    await expect(cache.getBattlePage('agent_key', 'deathmatch', DEFAULT_QUERY)).resolves.toEqual(battlePage('death-new'))
+    await expect(cache.getBattlePage('agent_key', 'deathmatch', DEFAULT_QUERY)).resolves.toEqual(battlePage('death-old'))
+    await vi.waitFor(async () => {
+      await expect(cache.getBattlePage('agent_key', 'deathmatch', DEFAULT_QUERY)).resolves.toEqual(battlePage('death-new'))
+    })
     await expect(cache.getBattlePage('agent_key', 'captureTheFlag', DEFAULT_QUERY)).resolves.toBe(ctfPage)
     expect(loadBattlePage).toHaveBeenCalledTimes(3)
   })

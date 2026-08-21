@@ -3,6 +3,8 @@ import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import { useSyncExternalStore } from 'react'
 import type { AgentConversationService } from '../conversations/service.js'
 import type { RecentBattlesCache } from '../battles/recent-battles-cache.js'
+import type { BattleMapsCache } from '../battles/battle-maps-cache.js'
+import type { DashboardSummaryCache } from '../shared/dashboard-summary-cache.js'
 import { readStoredAppKey, removeStoredAppKey, saveStoredAppKey } from '../settings/app-key.js'
 import type { OwnedEntitiesCache } from '../shared/owned-entities-cache.js'
 import { requiresAgentDuelAppKey, type AgentDuelRoute } from './routes.js'
@@ -28,7 +30,9 @@ export interface AgentDuelModel {
 
 export interface AgentDuelInjected {
   model: AgentDuelModel
+  battleMaps: BattleMapsCache
   conversations: AgentConversationService
+  dashboardSummary: DashboardSummaryCache
   ownedEntities: OwnedEntitiesCache
   recentBattles: RecentBattlesCache
   getSession: (sessionId: SessionId) => SessionFace | undefined

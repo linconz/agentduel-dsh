@@ -5,15 +5,20 @@ import {
   useUnauthorizedEffect
 } from '../shared/load-state.js'
 import { useModuleLink } from '../shared/module-link.js'
-import type { OwnedEntitiesPageProps } from '../shared/page-types.js'
+import type { DashboardSummaryCache } from '../shared/dashboard-summary-cache.js'
+import type { BasicPageProps } from '../shared/page-types.js'
 import { routeHref } from '../shell/routes.js'
 import { mapCharacterListItem } from './character-mappers.js'
 
-export function CharacterListPage({ appKey, navigation, ownedEntities }: OwnedEntitiesPageProps): React.JSX.Element {
+export function CharacterListPage({
+  appKey,
+  dashboardSummary,
+  navigation
+}: BasicPageProps & { dashboardSummary: DashboardSummaryCache }): React.JSX.Element {
   const [state, reload] = useLoadState(
-    async (signal) => await ownedEntities.getCharacterList(appKey, signal),
-    [appKey, ownedEntities],
-    () => ownedEntities.peekCharacterList(appKey)
+    async (signal) => await dashboardSummary.get(appKey, 'zh-CN', signal),
+    [appKey, dashboardSummary],
+    () => dashboardSummary.peek(appKey)
   )
   useUnauthorizedEffect(state.error, navigation)
   const Link = useModuleLink(navigation)
@@ -22,10 +27,7 @@ export function CharacterListPage({ appKey, navigation, ownedEntities }: OwnedEn
   return (
     <div className="agentduel-mode-list-shell">
       <AgentDuelCharacterList
-        characters={state.value.characters.map(character => mapCharacterListItem(
-          character,
-          state.value.versions.get(character.public_id) ?? null
-        ))}
+        characters={state.value.characters.map(mapCharacterListItem)}
         createCharacterHref={routeHref({ kind: 'character-create' })}
         getCharacterHref={(publicId: string) => routeHref({ kind: 'character-detail', publicId })}
         i18nMode="bundled"
