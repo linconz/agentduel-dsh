@@ -15,6 +15,7 @@ const character: DashboardCharacterSummary = {
     agent_contract_version: '0.1.0'
   },
   ranked_rating: 912,
+  battle_counts: { practice: 4, ranked: 5 },
   ranked_results: { wins: 5, draws: 1, losses: 3 },
   latest_submission: { version_no: 8, status: 'compiling' },
   battle_readiness: {

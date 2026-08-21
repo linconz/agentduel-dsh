@@ -30,6 +30,7 @@ interface DashboardSummaryCacheOptions {
 
 export interface DashboardSummaryCache {
   setAppKey: (appKey: string | null) => void
+  subscribe: (listener: () => void) => () => void
   peek: (appKey: string) => DashboardSummary | null
   get: (
     appKey: string,
@@ -54,6 +55,11 @@ export function createDashboardSummaryCache(
   let pending: PendingRequest | null = null
   let generation = 0
   let disposed = false
+  const listeners = new Set<() => void>()
+
+  const emit = (): void => {
+    for (const listener of listeners) listener()
+  }
 
   const clear = (): void => {
     generation += 1
@@ -61,6 +67,7 @@ export function createDashboardSummaryCache(
     pending = null
     value = null
     expiresAt = 0
+    emit()
   }
   const requireActiveKey = (appKey: string): void => {
     if (disposed) throw abortError('Dashboard 摘要缓存已释放')
@@ -89,6 +96,7 @@ export function createDashboardSummaryCache(
           value = summary
           expiresAt = now() + ttlMs
           pending = null
+          emit()
         }
         return summary
       },
@@ -108,6 +116,10 @@ export function createDashboardSummaryCache(
       clear()
       activeAppKey = appKey
       unauthorizedAppKey = null
+    },
+    subscribe(listener) {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
     },
     peek(appKey) {
       if (disposed || activeAppKey !== appKey || value === null) return null
@@ -135,6 +147,7 @@ export function createDashboardSummaryCache(
       clear()
       activeAppKey = null
       unauthorizedAppKey = null
+      listeners.clear()
     }
   }
 }

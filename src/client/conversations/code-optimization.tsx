@@ -1,6 +1,6 @@
 import type { SessionId, WorkspaceId } from '@deepseek-ai/dsh-client-connection/client'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { errorMessage, flattenModels, modelSelectionKey } from './helpers.js'
 import type { AgentConversationService, PreparedAgentConversation } from './service.js'
@@ -10,23 +10,54 @@ export type AgentOptimizationResource =
   | { kind: 'team'; publicId: string }
 
 type AgentCodeOptimizationProps = Pick<PropsRuntime<'conversation'>, 'useSessions' | 'useWorkspaces'> & {
+  highlight?: boolean
   resource: AgentOptimizationResource
   initialPrompt: string
   service: AgentConversationService
+  onHighlightComplete?: () => void
   onSubmitted: (sessionId: SessionId) => void
 }
 
+export const AGENT_OPTIMIZATION_HIGHLIGHT_MS = 3000
+
+interface AgentOptimizationHighlightRuntime {
+  requestAnimationFrame: (callback: FrameRequestCallback) => number
+  cancelAnimationFrame: (handle: number) => void
+  setTimeout: (handler: TimerHandler, timeout?: number) => number
+  clearTimeout: (id: number) => void
+  matchMedia?: (query: string) => MediaQueryList
+}
+
+export function startAgentOptimizationHighlight(
+  section: Pick<HTMLElement, 'scrollIntoView'> | null,
+  onComplete: () => void,
+  runtime: AgentOptimizationHighlightRuntime = window
+): () => void {
+  const frame = runtime.requestAnimationFrame(() => {
+    const reduceMotion = runtime.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+    section?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' })
+  })
+  const timeout = runtime.setTimeout(onComplete, AGENT_OPTIMIZATION_HIGHLIGHT_MS)
+  return () => {
+    runtime.cancelAnimationFrame(frame)
+    runtime.clearTimeout(timeout)
+  }
+}
+
 export function AgentCodeOptimization({
+  highlight = false,
   resource,
   initialPrompt,
   service,
   useSessions,
   useWorkspaces,
+  onHighlightComplete,
   onSubmitted
 }: AgentCodeOptimizationProps): React.JSX.Element {
   const headingId = useId()
   const promptId = useId()
   const modelId = useId()
+  const sectionRef = useRef<HTMLDivElement>(null)
   const workspaces = useWorkspaces(state => state.items)
   const workspaceState = useWorkspaces(state => state.state)
   const recentWorkspaceId = useWorkspaces(state => state.recentWorkspaceId)
@@ -40,6 +71,16 @@ export function AgentCodeOptimization({
   const [loadingModels, setLoadingModels] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [highlighting, setHighlighting] = useState(highlight)
+
+  useEffect(() => {
+    if (!highlight) return
+    setHighlighting(true)
+    return startAgentOptimizationHighlight(sectionRef.current, () => {
+      setHighlighting(false)
+      onHighlightComplete?.()
+    })
+  }, [highlight, onHighlightComplete])
 
   const preferredWorkspace = useMemo(() => {
     const selectedWorkspace = selectedWorkspaceId === null
@@ -153,7 +194,10 @@ export function AgentCodeOptimization({
 
   const noWorkspace = workspaces.length === 0
   return (
-    <div className="agentduel-deathmode character-detail-section agentduel-character-agent-optimization">
+    <div
+      ref={sectionRef}
+      className={`agentduel-deathmode character-detail-section agentduel-character-agent-optimization${highlighting ? ' is-onboarding-highlighted' : ''}`}
+    >
       <section aria-labelledby={headingId}>
         <div className="character-detail-section-heading">
           <h2 id={headingId}>Agent 代码优化</h2>

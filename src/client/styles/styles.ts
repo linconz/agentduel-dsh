@@ -316,6 +316,28 @@ a.agentduel-conversation-battle-button:visited:hover {
   width: 100%;
 }
 
+.agentduel-character-agent-optimization.is-onboarding-highlighted {
+  border-radius: 12px;
+  outline: 3px solid #b07600;
+  outline-offset: 5px;
+  background: #fff8df;
+  box-shadow: 0 0 0 8px rgb(176 118 0 / 12%), 0 12px 36px rgb(122 75 34 / 18%);
+  scroll-margin-block: 24px;
+  animation: agentduel-agent-optimization-highlight 500ms steps(1, end) 6;
+}
+
+@keyframes agentduel-agent-optimization-highlight {
+  0%, 100% {
+    outline-color: #b07600;
+    background: #fff8df;
+  }
+
+  50% {
+    outline-color: #7a4b22;
+    background: #ffe7a3;
+  }
+}
+
 @container agentduel-replay (max-width: 1174px) {
   .agentduel-module-host > .agentduel-replay-player .battle-replay-content-row {
     grid-template-columns: minmax(0, 1fr);
@@ -373,6 +395,83 @@ a.agentduel-conversation-battle-button:visited:hover {
   min-height: 100%;
   padding: 32px 24px;
   place-items: center;
+}
+
+.agentduel-onboarding-page {
+  display: grid;
+  width: 100%;
+  min-height: 100%;
+  padding: 32px 24px;
+  place-items: center;
+}
+
+.agentduel-onboarding-card {
+  position: relative;
+  width: min(100%, 620px);
+  padding: clamp(54px, 8vw, 76px) clamp(26px, 6vw, 52px) clamp(38px, 6vw, 52px);
+  border: 1px solid #d8cbbd;
+  border-radius: 20px;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 20px 70px rgb(15 23 42 / 10%);
+}
+
+.agentduel-onboarding-header {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  left: 20px;
+  display: flex;
+  min-height: 18px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.agentduel-onboarding-skip {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary, #666);
+  font: inherit;
+  font-size: 13px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.agentduel-onboarding-skip:hover {
+  color: #7a4b22;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.agentduel-onboarding-kicker {
+  margin: 0;
+  color: #9a6300;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  letter-spacing: .12em;
+}
+
+.agentduel-onboarding-card h1 {
+  max-width: 500px;
+  margin: 0 auto;
+  color: #2f241a;
+  font-size: clamp(20px, 3vw, 28px);
+  line-height: 1.35;
+}
+
+.agentduel-onboarding-card .agentduel-onboarding-action {
+  display: block;
+  min-width: 148px;
+  margin: 32px auto 0;
+  background: #7a4b22;
+}
+
+.agentduel-onboarding-card .agentduel-onboarding-action:hover:not(:disabled) {
+  background: #69401d;
 }
 
 .agentduel-module-state > div {
@@ -1306,6 +1405,14 @@ a.agentduel-conversation-battle-button:visited:hover {
     padding: 32px 14px;
   }
 
+  .agentduel-onboarding-page {
+    padding: 24px 14px;
+  }
+
+  .agentduel-onboarding-card {
+    border-radius: 16px;
+  }
+
   .agentduel-settings-page {
     padding: 14px;
   }
@@ -1367,6 +1474,10 @@ a.agentduel-conversation-battle-button:visited:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .agentduel-character-agent-optimization.is-onboarding-highlighted {
+    animation: none !important;
+  }
+
   .agentduel-page *,
   .agentduel-root * {
     scroll-behavior: auto !important;

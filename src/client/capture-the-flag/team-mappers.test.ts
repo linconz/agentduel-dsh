@@ -15,6 +15,7 @@ const team: DashboardTeamSummary = {
     agent_contract_version: '0.1.0'
   },
   ranked_rating: 1040,
+  battle_counts: { practice: 1, ranked: 3 },
   ranked_results: { wins: 2, draws: 1, losses: 1 },
   latest_submission: null,
   battle_readiness: {

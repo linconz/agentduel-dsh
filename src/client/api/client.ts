@@ -100,6 +100,11 @@ export interface DashboardRankedResults {
   losses: number
 }
 
+export interface DashboardBattleCounts {
+  practice: number
+  ranked: number
+}
+
 export interface DashboardBattleReadiness {
   practice: {
     can_request: boolean
@@ -121,6 +126,7 @@ export interface DashboardCharacterSummary {
   created_at: string
   active_code: DashboardActiveCodeSummary | null
   ranked_rating: number
+  battle_counts: DashboardBattleCounts
   ranked_results: DashboardRankedResults
   latest_submission: DashboardLatestSubmissionSummary | null
   battle_readiness: DashboardBattleReadiness
@@ -136,12 +142,16 @@ export interface DashboardTeamSummary {
   created_at: string
   active_code: DashboardActiveCodeSummary | null
   ranked_rating: number
+  battle_counts: DashboardBattleCounts
   ranked_results: DashboardRankedResults
   latest_submission: DashboardLatestSubmissionSummary | null
   battle_readiness: DashboardBattleReadiness
 }
 
 export interface DashboardSummary {
+  user: {
+    public_id: string
+  }
   characters: DashboardCharacterSummary[]
   teams: DashboardTeamSummary[]
 }

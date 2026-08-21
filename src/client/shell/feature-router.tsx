@@ -26,6 +26,7 @@ export function AgentDuelFeaturePage({
   battleMaps,
   conversations,
   dashboardSummary,
+  highlightOptimizationPublicId,
   navigation,
   ownedEntities,
   recentBattles,
@@ -33,18 +34,21 @@ export function AgentDuelFeaturePage({
   route,
   runTurnstile,
   useSessions,
-  useWorkspaces
+  useWorkspaces,
+  onOptimizationHighlightComplete
 }: Pick<PropsRuntime<'conversation'>, 'useSessions' | 'useWorkspaces'> & {
   appKey: string
   battleMaps: BattleMapsCache
   conversations: AgentConversationService
   dashboardSummary: DashboardSummaryCache
+  highlightOptimizationPublicId: string | null
   navigation: AgentDuelPageNavigation
   ownedEntities: OwnedEntitiesCache
   recentBattles: RecentBattlesCache
   onConversationSubmitted: (sessionId: SessionId) => void
   route: AgentDuelFeatureRoute
   runTurnstile: RunTurnstile
+  onOptimizationHighlightComplete: () => void
 }): React.JSX.Element {
   const key = route.kind === 'character-detail' || route.kind === 'character-public-detail' || route.kind === 'character-edit'
     || route.kind === 'team-detail' || route.kind === 'team-public-detail' || route.kind === 'team-edit' || route.kind === 'replay'
@@ -59,7 +63,9 @@ export function AgentDuelFeaturePage({
         <CharacterDetailPage
           appKey={appKey}
           conversations={conversations}
+          highlightAgentOptimization={highlightOptimizationPublicId === route.publicId}
           navigation={navigation}
+          onAgentOptimizationHighlightComplete={onOptimizationHighlightComplete}
           publicId={route.publicId}
           runTurnstile={runTurnstile}
           useSessions={useSessions}

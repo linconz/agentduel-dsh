@@ -53,13 +53,17 @@ type CharacterDetailPageProps = WriteDetailPageProps
   & Pick<PropsRuntime<'conversation'>, 'useSessions' | 'useWorkspaces'>
   & {
     conversations: AgentConversationService
+    highlightAgentOptimization: boolean
+    onAgentOptimizationHighlightComplete: () => void
     onConversationSubmitted: (sessionId: SessionId) => void
   }
 
 export function CharacterDetailPage({
   appKey,
   conversations,
+  highlightAgentOptimization,
   navigation,
+  onAgentOptimizationHighlightComplete,
   onConversationSubmitted,
   publicId,
   runTurnstile,
@@ -148,11 +152,13 @@ export function CharacterDetailPage({
         locale="zh-CN"
       />
       <AgentCodeOptimization
+        highlight={highlightAgentOptimization}
         resource={{ kind: 'character', publicId: character.public_id }}
         initialPrompt={prompt}
         service={conversations}
         useSessions={useSessions}
         useWorkspaces={useWorkspaces}
+        onHighlightComplete={onAgentOptimizationHighlightComplete}
         onSubmitted={onConversationSubmitted}
       />
       <AgentDuelCharacterOwnerCodeVersions

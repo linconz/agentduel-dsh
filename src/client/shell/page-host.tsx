@@ -1,13 +1,14 @@
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { useCallback, useMemo, useRef } from 'react'
 import { AgentConversationComposer } from '../conversations/composer.js'
+import { OnboardingGate } from '../onboarding/gate.js'
 import { AppKeyPage } from '../settings/app-key-page.js'
 import type { RunTurnstile } from '../shared/page-types.js'
 import { executeTurnstile, TurnstileVerificationError } from '../shared/turnstile.js'
 import { SpectatePage } from '../spectate/spectate-page.js'
 import { AgentDuelFeaturePage } from './feature-router.js'
 import { useAgentDuel, type AgentDuelInjected } from './model.js'
-import type { AgentDuelPageNavigation, AgentDuelRoute } from './routes.js'
+import type { AgentDuelFeatureRoute, AgentDuelPageNavigation, AgentDuelRoute } from './routes.js'
 
 type AgentDuelPageProps = PropsRuntime<'conversation'> & AgentDuelInjected
 
@@ -49,23 +50,34 @@ export function AgentDuelPage({
       ) : snapshot.route.kind === 'app-key' || snapshot.appKey === null ? (
         <AppKeyPage appKey={snapshot.appKey} model={model} runTurnstile={runTurnstile} />
       ) : (
-        <AgentDuelFeaturePage
+        <OnboardingGate
           appKey={snapshot.appKey}
-          battleMaps={battleMaps}
-          conversations={conversations}
           dashboardSummary={dashboardSummary}
           navigation={navigation}
-          ownedEntities={ownedEntities}
-          recentBattles={recentBattles}
-          route={snapshot.route}
-          runTurnstile={runTurnstile}
-          useSessions={useSessions}
-          useWorkspaces={useWorkspaces}
-          onConversationSubmitted={(sessionId) => {
-            model.closePage()
-            conversations.open(sessionId)
-          }}
-        />
+          route={snapshot.route as AgentDuelFeatureRoute}
+        >
+          {(highlightOptimizationPublicId, onOptimizationHighlightComplete) => (
+            <AgentDuelFeaturePage
+              appKey={snapshot.appKey as string}
+              battleMaps={battleMaps}
+              conversations={conversations}
+              dashboardSummary={dashboardSummary}
+              highlightOptimizationPublicId={highlightOptimizationPublicId}
+              navigation={navigation}
+              ownedEntities={ownedEntities}
+              recentBattles={recentBattles}
+              route={snapshot.route as AgentDuelFeatureRoute}
+              runTurnstile={runTurnstile}
+              useSessions={useSessions}
+              useWorkspaces={useWorkspaces}
+              onOptimizationHighlightComplete={onOptimizationHighlightComplete}
+              onConversationSubmitted={(sessionId) => {
+                model.closePage()
+                conversations.open(sessionId)
+              }}
+            />
+          )}
+        </OnboardingGate>
       )}
       <div ref={turnstileContainerRef} className="agentduel-turnstile" />
     </section>

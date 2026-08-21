@@ -50,6 +50,25 @@ describe('Dashboard 摘要共享缓存', () => {
     expect(loadSummary).toHaveBeenCalledTimes(2)
   })
 
+  it('在 App Key 与摘要数据变化时通知订阅者', async () => {
+    const initial = deferred<DashboardSummary>()
+    const loadSummary = vi.fn().mockReturnValueOnce(initial.promise)
+    const cache = createDashboardSummaryCache({ loadSummary })
+    const listener = vi.fn()
+    const unsubscribe = cache.subscribe(listener)
+
+    cache.setAppKey('agent_key')
+    expect(listener).toHaveBeenCalledTimes(1)
+    const initialRead = cache.get('agent_key', 'zh-CN')
+    initial.resolve(summary('old'))
+    await expect(initialRead).resolves.toEqual(summary('old'))
+    expect(listener).toHaveBeenCalledTimes(2)
+
+    unsubscribe()
+    cache.setAppKey(null)
+    expect(listener).toHaveBeenCalledTimes(2)
+  })
+
   it('过期摘要仍立即展示，并在后台合并刷新请求', async () => {
     let now = 1_000
     const refreshed = deferred<DashboardSummary>()
@@ -119,6 +138,7 @@ describe('Dashboard 摘要共享缓存', () => {
 
 function summary(name: string): DashboardSummary {
   return {
+    user: { public_id: `account-${name}` },
     characters: [{
       public_id: `character-${name}`,
       slot_no: 1,
@@ -129,6 +149,7 @@ function summary(name: string): DashboardSummary {
       created_at: '2026-08-01T00:00:00.000Z',
       active_code: null,
       ranked_rating: 800,
+      battle_counts: { practice: 0, ranked: 0 },
       ranked_results: { wins: 0, draws: 0, losses: 0 },
       latest_submission: null,
       battle_readiness: {

@@ -82,4 +82,20 @@ describe('插件页面样式', () => {
     expect(styles).toMatch(/\.agentduel-get-key-button \{[\s\S]*?animation: agentduel-get-key-flash 2s steps\(1, end\) infinite;/)
     expect(styles).toMatch(/@keyframes agentduel-get-key-flash \{[\s\S]*?0% \{[\s\S]*?background: #fff;[\s\S]*?50% \{[\s\S]*?background: #fff4c2;/)
   })
+
+  it('新用户说明页使用居中卡片并让 GUIDE 与跳过入口等距对齐', () => {
+    expect(styles).toMatch(/\.agentduel-onboarding-page \{[\s\S]*?place-items: center;/)
+    expect(styles).toMatch(/\.agentduel-onboarding-card \{[\s\S]*?position: relative;[\s\S]*?width: min\(100%, 620px\);/)
+    expect(styles).toMatch(/\.agentduel-onboarding-header \{[\s\S]*?position: absolute;[\s\S]*?top: 18px;[\s\S]*?right: 20px;[\s\S]*?left: 20px;[\s\S]*?align-items: center;[\s\S]*?justify-content: space-between;/)
+    expect(styles).toMatch(/\.agentduel-onboarding-skip \{[\s\S]*?padding: 0;[\s\S]*?line-height: 18px;/)
+    expect(styles).toMatch(/\.agentduel-onboarding-kicker \{[\s\S]*?line-height: 18px;/)
+    expect(styles).toMatch(/\.agentduel-onboarding-card h1 \{[\s\S]*?font-size: clamp\(20px, 3vw, 28px\);/)
+    expect(styles).toMatch(/\.agentduel-onboarding-card \.agentduel-onboarding-action \{[\s\S]*?display: block;[\s\S]*?margin: 32px auto 0;/)
+  })
+
+  it('Agent 代码优化 section 闪烁三秒并为减少动态效果保留静态高亮', () => {
+    expect(styles).toMatch(/\.agentduel-character-agent-optimization\.is-onboarding-highlighted \{[\s\S]*?animation: agentduel-agent-optimization-highlight 500ms steps\(1, end\) 6;/)
+    expect(styles).toContain('@keyframes agentduel-agent-optimization-highlight')
+    expect(styles).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.agentduel-character-agent-optimization\.is-onboarding-highlighted \{[\s\S]*?animation: none !important;/)
+  })
 })
