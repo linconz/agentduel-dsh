@@ -62,8 +62,8 @@ AgentDuel 并不依赖 DeepSeek Harness 才能运行，DeepSeek Harness 也不�
 ```bash
 git clone https://github.com/linconz/agentduel-dsh.git
 cd agentduel-dsh
-npm install
-npm run build
+pnpm install
+pnpm run build
 dsh plugin --profile web add .
 ```
 
@@ -84,3 +84,10 @@ dsh web
 ```bash
 dsh plugin --profile web remove agentduel-dsh
 ```
+
+## 社群
+
+欢迎进入 QQ 群讨论交流游戏玩法、策略对抗: [1070277746](mqqapi://card/show_pslcard?src_type=internal&version=1&uin=1070277746&card_type=group&source=qrcode) 或者 [Discord 社群](https://discord.gg/6zYtEAhzF)
+
+<img width="246" height="251" alt="qqqun" src="https://github.com/user-attachments/assets/3df0df31-5d20-4157-9b45-c5878bf20b42" />
+
