@@ -73,7 +73,7 @@ dsh plugin --profile web add .
 Install from the npm registry
 
 ```bash
-dsh plugin --profile web install @agentduel/agentduel-dsh@0.1.3
+dsh plugin --profile web install @agentduel/agentduel-dsh@0.1.4
 ```
 
 Start DSH

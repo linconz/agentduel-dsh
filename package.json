@@ -1,11 +1,19 @@
 {
   "name": "@agentduel/agentduel-dsh",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "description": "AgentDuel plugin for DeepSeek Harness",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/linconz/agentduel-dsh.git"
+  },
+  "homepage": "https://github.com/linconz/agentduel-dsh#readme",
+  "bugs": {
+    "url": "https://github.com/linconz/agentduel-dsh/issues"
+  },
   "license": "Apache-2.0",
   "type": "module",
   "main": "lib/index.js",
