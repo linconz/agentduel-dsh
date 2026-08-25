@@ -6,11 +6,18 @@ export const styles = String.raw`
   box-sizing: border-box;
 }
 
+div:has(> [data-slot='sidebar.footer.action'] > .agentduel-root) {
+  flex-direction: column;
+  align-items: stretch;
+}
+
 .agentduel-root {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 4px;
   width: 100%;
+  min-width: 0;
   padding: 0;
   color: var(--dsw-alias-label-primary, #171717);
   font-family: inherit;
@@ -145,6 +152,7 @@ export const styles = String.raw`
 
 .agentduel-root--rail {
   align-items: center;
+  width: 36px;
 }
 
 .agentduel-root--rail .agentduel-trigger {

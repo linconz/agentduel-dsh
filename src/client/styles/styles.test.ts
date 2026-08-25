@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { styles } from './styles.js'
 
 describe('插件页面样式', () => {
+  it('侧边栏底部多个入口纵向排列且 AgentDuel 不会被压缩', () => {
+    expect(styles).toMatch(/div:has\(> \[data-slot='sidebar\.footer\.action'\] > \.agentduel-root\) \{[\s\S]*?flex-direction: column;[\s\S]*?align-items: stretch;/)
+    expect(styles).not.toContain('div:has(> .agentduel-root)')
+    expect(styles).toMatch(/\.agentduel-root \{[\s\S]*?flex: 0 0 auto;[\s\S]*?width: 100%;[\s\S]*?min-width: 0;/)
+    expect(styles).toMatch(/\.agentduel-root--rail \{[\s\S]*?align-items: center;[\s\S]*?width: 36px;/)
+  })
+
   it('展开的左侧菜单使用白色圆角卡片和轻阴影', () => {
     expect(styles).toContain('.agentduel-root--expanded')
     expect(styles).toContain('border: 1px solid #e5e7eb')
