@@ -1,4 +1,5 @@
-import type { ConversationSnapshot } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SessionSnapshot } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { useAgentDuel, type AgentDuelInjected } from '../shell/model.js'
@@ -9,6 +10,7 @@ type ConversationBattleLinkBridgeProps = PropsRuntime<'shell.overlay'> & AgentDu
 
 export function ConversationBattleLinkBridge({
   conversations,
+  getChat,
   getSession,
   model,
   useSessions
@@ -16,18 +18,32 @@ export function ConversationBattleLinkBridge({
   const agentDuelSnapshot = useAgentDuel(model)
   const currentSessionId = useSessions(state => state.current)
   const currentSession = currentSessionId === undefined ? undefined : getSession(currentSessionId)
+  const currentChat = currentSessionId === undefined ? undefined : getChat(currentSessionId)
   const subscribeCurrentSession = useCallback(
     (listener: () => void) => currentSession?.subscribe(listener) ?? (() => {}),
     [currentSession]
   )
   const getCurrentSessionSnapshot = useCallback(
-    (): ConversationSnapshot | undefined => currentSession?.getSnapshot(),
+    (): SessionSnapshot | undefined => currentSession?.getSnapshot(),
     [currentSession]
   )
-  const currentConversation = useSyncExternalStore(
+  const currentSessionSnapshot = useSyncExternalStore(
     subscribeCurrentSession,
     getCurrentSessionSnapshot,
     getCurrentSessionSnapshot
+  )
+  const subscribeCurrentChat = useCallback(
+    (listener: () => void) => currentChat?.subscribe(listener) ?? (() => {}),
+    [currentChat]
+  )
+  const getCurrentChatSnapshot = useCallback(
+    (): ChatSnapshot | undefined => currentChat?.getSnapshot(),
+    [currentChat]
+  )
+  const currentChatSnapshot = useSyncExternalStore(
+    subscribeCurrentChat,
+    getCurrentChatSnapshot,
+    getCurrentChatSnapshot
   )
   const records = useSyncExternalStore(
     conversations.subscribe,
@@ -38,7 +54,8 @@ export function ConversationBattleLinkBridge({
   const [enhancedSessionId, setEnhancedSessionId] = useState<string | null>(null)
   const fallbackSearch = record === undefined ? null : getRecordedConversationBattleSearch(record)
   const canOfferBattle = canOfferBattleFromConversation(
-    currentConversation,
+    currentSessionSnapshot,
+    currentChatSnapshot,
     agentDuelSnapshot.route.kind !== 'none'
   )
 

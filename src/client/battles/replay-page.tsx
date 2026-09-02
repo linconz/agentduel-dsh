@@ -4,7 +4,7 @@ import {
   type NormalizedReplayResult
 } from '@agentduel/replay-player'
 import { AgentDuelBreadcrumbs } from '@agentduel/component'
-import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { useEffect, useState } from 'react'
 import {

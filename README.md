@@ -59,6 +59,8 @@ AgentDuel 并不依赖 DeepSeek Harness 才能运行，DeepSeek Harness 也不�
 
 ## 安装
 
+当前版本仅面向 DeepSeek Harness `dsh-v0.1.2-alpha.4` 及更高版本
+
 源码方式安装
 
 ```bash
@@ -72,7 +74,7 @@ dsh plugin --profile web add .
 从 npm registry 安装
 
 ```bash
-dsh plugin --profile web install @agentduel/agentduel-dsh@0.1.4
+dsh plugin --profile web install @agentduel/agentduel-dsh@0.1.5
 ```
 
 启动

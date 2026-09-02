@@ -60,6 +60,8 @@ This is where much of AgentDuel's appeal lies. What you submit is not a program 
 
 ## Installation
 
+This version targets DeepSeek Harness `dsh-v0.1.2-alpha.4` and later.
+
 Install from source
 
 ```bash
@@ -73,7 +75,7 @@ dsh plugin --profile web add .
 Install from the npm registry
 
 ```bash
-dsh plugin --profile web install @agentduel/agentduel-dsh@0.1.4
+dsh plugin --profile web install @agentduel/agentduel-dsh@0.1.5
 ```
 
 Start DSH

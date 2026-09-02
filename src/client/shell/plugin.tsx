@@ -1,7 +1,14 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type {} from '@deepseek-ai/dsh-api-session-controller/client'
+import type {} from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
+import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import type {} from '@deepseek-ai/dsh-client-ui-model-selection/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
+import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import { bindRecentBattlesCache, createRecentBattlesCache } from '../battles/recent-battles-cache.js'
 import { bindBattleMapsCache, createBattleMapsCache } from '../battles/battle-maps-cache.js'
 import { ConversationBattleLinkBridge } from '../conversations/battle-link-bridge.js'
@@ -14,7 +21,10 @@ import { createAgentDuelModel, type AgentDuelInjected } from './model.js'
 import { AgentDuelPage } from './page-host.js'
 import { SidebarEntry } from './sidebar.js'
 
-export const inject = ['slots', 'connection', 'sessions', 'workspaces']
+export const inject = [
+  'slots', 'sessions', 'workspaces', 'uiSession', 'uiConversation', 'uiWorkspace',
+  'modelDirectories', 'remote', 'remote.session'
+]
 
 export function apply(ctx: ClientContext): void {
   const model = createAgentDuelModel()
@@ -22,8 +32,7 @@ export function apply(ctx: ClientContext): void {
   const dashboardSummary = createDashboardSummaryCache({ onUnauthorized: model.invalidateAppKey })
   const ownedEntities = createOwnedEntitiesCache({ onUnauthorized: model.invalidateAppKey })
   const recentBattles = createRecentBattlesCache({ onUnauthorized: model.invalidateAppKey })
-  const connection = ctx.get('connection') as ConnectionHandle
-  const conversations = createAgentConversationService(ctx, connection)
+  const conversations = createAgentConversationService(ctx)
   const injectModel = (): AgentDuelInjected => ({
     model,
     battleMaps,
@@ -31,7 +40,13 @@ export function apply(ctx: ClientContext): void {
     dashboardSummary,
     ownedEntities,
     recentBattles,
-    getSession: sessionId => ctx.sessions.binding(sessionId)?.session
+    getSession: sessionId => ctx.sessions.binding(sessionId)?.session,
+    getChat: (sessionId) => {
+      const binding = ctx.sessions.binding(sessionId)
+      return binding === undefined
+        ? undefined
+        : ctx.uiConversation.binding(binding).target('chat')
+    }
   })
   installStyles(ctx)
   ctx.effect(() => bindBattleMapsCache(battleMaps, model), 'agentduel: battle maps cache')

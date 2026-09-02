@@ -1,4 +1,4 @@
-import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -24,7 +24,6 @@ export function AgentConversationComposer({
 }: AgentConversationComposerProps): React.JSX.Element {
   const workspaces = useWorkspaces(state => state.items)
   const workspaceState = useWorkspaces(state => state.state)
-  const recentWorkspaceId = useWorkspaces(state => state.recentWorkspaceId)
   const currentSessionId = useSessions(state => state.current)
   const [workspaceId, setWorkspaceId] = useState<string>('')
   const [taskKind, setTaskKind] = useState<AgentTaskKind>('optimize')
@@ -41,9 +40,8 @@ export function AgentConversationComposer({
       ? undefined
       : workspaces.find(workspace => workspace.sessionIds.includes(currentSessionId))
     return currentWorkspace
-      ?? workspaces.find(workspace => workspace.workspaceId === recentWorkspaceId)
       ?? workspaces[0]
-  }, [currentSessionId, recentWorkspaceId, workspaces])
+  }, [currentSessionId, workspaces])
 
   useEffect(() => {
     if (workspaces.some(workspace => workspace.workspaceId === workspaceId)) return

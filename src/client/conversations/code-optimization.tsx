@@ -1,4 +1,5 @@
-import type { SessionId, WorkspaceId } from '@deepseek-ai/dsh-client-connection/client'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -60,7 +61,6 @@ export function AgentCodeOptimization({
   const sectionRef = useRef<HTMLDivElement>(null)
   const workspaces = useWorkspaces(state => state.items)
   const workspaceState = useWorkspaces(state => state.state)
-  const recentWorkspaceId = useWorkspaces(state => state.recentWorkspaceId)
   const currentSessionId = useSessions(state => state.current)
   const [prompt, setPrompt] = useState(initialPrompt)
   const [prepared, setPrepared] = useState<PreparedAgentConversation | null>(null)
@@ -91,9 +91,8 @@ export function AgentCodeOptimization({
       : workspaces.find(workspace => workspace.sessionIds.includes(currentSessionId))
     return selectedWorkspace
       ?? currentWorkspace
-      ?? workspaces.find(workspace => workspace.workspaceId === recentWorkspaceId)
       ?? workspaces[0]
-  }, [currentSessionId, recentWorkspaceId, selectedWorkspaceId, workspaces])
+  }, [currentSessionId, selectedWorkspaceId, workspaces])
 
   useEffect(() => {
     if (preferredWorkspace === undefined) {

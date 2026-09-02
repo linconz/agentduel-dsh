@@ -1,5 +1,5 @@
-import type { SessionSummary } from '@deepseek-ai/dsh-client-runtime/client'
-import type { ModelCatalogModel, ModelSelection } from '@deepseek-ai/dsh-client-connection/client'
+import type { SessionSummary } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { ModelCatalogModel, ModelSelection } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { PreparedAgentConversation } from './service.js'
 
 export const TASK_PROMPTS = {
@@ -43,14 +43,15 @@ export function promptTitle(prompt: string): string {
 
 export function getConversationStatus(
   summary: SessionSummary | undefined,
+  pendingInteractionKind: string | undefined,
   loading: boolean
 ): { label: string; tone: 'running' | 'waiting' | 'complete' | 'submitted' | 'missing' } {
   if (summary === undefined) return loading
     ? { label: '加载中', tone: 'submitted' }
     : { label: '不可用', tone: 'missing' }
-  if (summary.pendingInteraction === 'approval') return { label: '等待确认', tone: 'waiting' }
-  if (summary.pendingInteraction === 'plan-review') return { label: '等待方案确认', tone: 'waiting' }
-  if (summary.pendingInteraction === 'question') return { label: '等待回答', tone: 'waiting' }
+  if (pendingInteractionKind === 'approval') return { label: '等待确认', tone: 'waiting' }
+  if (pendingInteractionKind === 'plan-review') return { label: '等待方案确认', tone: 'waiting' }
+  if (pendingInteractionKind === 'question') return { label: '等待回答', tone: 'waiting' }
   if (summary.running) return { label: '运行中', tone: 'running' }
   if (summary.blank) return { label: '已提交', tone: 'submitted' }
   return { label: '已完成', tone: 'complete' }

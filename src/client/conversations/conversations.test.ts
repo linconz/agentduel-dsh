@@ -1,11 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { ClientContext, ConversationSnapshot, SessionSummary } from '@deepseek-ai/dsh-client-runtime/client'
-import type {
-  ConnectionHandle,
-  ModelSelection,
-  SessionId,
-  WorkspaceId
-} from '@deepseek-ai/dsh-client-connection/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { SessionSnapshot, SessionSummary } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { ModelSelection } from '@deepseek-ai/dsh-api-session-controller/types'
+import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
 import {
   getConversationBattleSearch,
   getRecordedConversationBattleSearch
@@ -32,9 +31,8 @@ describe('AgentDuel 对话历史', () => {
   const conversationWithTurnEndReason = (
     kind: 'completed' | 'aborted' | 'error' | 'max-tokens',
     running = false
-  ): ConversationSnapshot => ({
-    running,
-    blank: false,
+  ): { session: SessionSnapshot; chat: ChatSnapshot } => ({
+    session: { running, blank: false } as SessionSnapshot,
     chat: {
       timeline: {
         turnOrder: [1],
@@ -42,42 +40,53 @@ describe('AgentDuel 对话历史', () => {
           end: { data: { reason: { kind } } }
         }]])
       }
-    }
-  } as unknown as ConversationSnapshot)
+    } as unknown as ChatSnapshot
+  })
 
   it('仅在最新回合由模型正常完成后允许开始对战', () => {
-    expect(didLatestTurnCompleteNormally(conversationWithTurnEndReason('completed'))).toBe(true)
-    expect(didLatestTurnCompleteNormally(conversationWithTurnEndReason('aborted'))).toBe(false)
-    expect(didLatestTurnCompleteNormally(conversationWithTurnEndReason('error'))).toBe(false)
-    expect(didLatestTurnCompleteNormally(conversationWithTurnEndReason('max-tokens'))).toBe(false)
-    expect(didLatestTurnCompleteNormally(conversationWithTurnEndReason('completed', true))).toBe(false)
-    expect(didLatestTurnCompleteNormally(undefined)).toBe(false)
+    const completed = conversationWithTurnEndReason('completed')
+    const aborted = conversationWithTurnEndReason('aborted')
+    const error = conversationWithTurnEndReason('error')
+    const maxTokens = conversationWithTurnEndReason('max-tokens')
+    const running = conversationWithTurnEndReason('completed', true)
+    expect(didLatestTurnCompleteNormally(completed.session, completed.chat)).toBe(true)
+    expect(didLatestTurnCompleteNormally(aborted.session, aborted.chat)).toBe(false)
+    expect(didLatestTurnCompleteNormally(error.session, error.chat)).toBe(false)
+    expect(didLatestTurnCompleteNormally(maxTokens.session, maxTokens.chat)).toBe(false)
+    expect(didLatestTurnCompleteNormally(running.session, running.chat)).toBe(false)
+    expect(didLatestTurnCompleteNormally(undefined, undefined)).toBe(false)
 
     const stoppedAfterEarlierCompletion = conversationWithTurnEndReason('aborted')
     const latestTurn = stoppedAfterEarlierCompletion.chat.timeline.turns.get(1)
-    expect(didLatestTurnCompleteNormally({
-      ...stoppedAfterEarlierCompletion,
-      chat: {
-        ...stoppedAfterEarlierCompletion.chat,
-        timeline: {
-          turnOrder: [0, 1],
-          turns: new Map<number, unknown>([
-            [0, {
-              ...latestTurn,
-              turn: 0,
-              end: { ...latestTurn?.end, data: { turn: 0, reason: { kind: 'completed' } } }
-            }],
-            [1, latestTurn]
-          ]) as unknown as ConversationSnapshot['chat']['timeline']['turns']
-        }
+    const chat = {
+      ...stoppedAfterEarlierCompletion.chat,
+      timeline: {
+        turnOrder: [0, 1],
+        turns: new Map<number, unknown>([
+          [0, {
+            ...latestTurn,
+            turn: 0,
+            end: { ...latestTurn?.end, data: { turn: 0, reason: { kind: 'completed' } } }
+          }],
+          [1, latestTurn]
+        ])
       }
-    } as ConversationSnapshot)).toBe(false)
+    } as unknown as ChatSnapshot
+    expect(didLatestTurnCompleteNormally(stoppedAfterEarlierCompletion.session, chat)).toBe(false)
   })
 
   it('进入 AgentDuel 功能页后隐藏对话页的开始对战入口', () => {
     const completedConversation = conversationWithTurnEndReason('completed')
-    expect(canOfferBattleFromConversation(completedConversation, false)).toBe(true)
-    expect(canOfferBattleFromConversation(completedConversation, true)).toBe(false)
+    expect(canOfferBattleFromConversation(
+      completedConversation.session,
+      completedConversation.chat,
+      false
+    )).toBe(true)
+    expect(canOfferBattleFromConversation(
+      completedConversation.session,
+      completedConversation.chat,
+      true
+    )).toBe(false)
   })
 
   it('将多行提示词压缩为稳定的菜单标题', () => {
@@ -148,14 +157,13 @@ describe('AgentDuel 对话历史', () => {
   it('优先展示需要用户处理的会话状态', () => {
     const waiting = {
       running: true,
-      pendingInteraction: 'approval',
       blank: false
     } as SessionSummary
     const completed = { running: false, blank: false } as SessionSummary
 
-    expect(getConversationStatus(waiting, false)).toEqual({ label: '等待确认', tone: 'waiting' })
-    expect(getConversationStatus(completed, false)).toEqual({ label: '已完成', tone: 'complete' })
-    expect(getConversationStatus(undefined, false)).toEqual({ label: '不可用', tone: 'missing' })
+    expect(getConversationStatus(waiting, 'approval', false)).toEqual({ label: '等待确认', tone: 'waiting' })
+    expect(getConversationStatus(completed, undefined, false)).toEqual({ label: '已完成', tone: 'complete' })
+    expect(getConversationStatus(undefined, undefined, false)).toEqual({ label: '不可用', tone: 'missing' })
   })
 
   it('只把插件会话对应角色的 AgentDuel 对战链接转换为内部跳转参数', () => {
@@ -245,7 +253,72 @@ describe('AgentDuel 对话历史', () => {
     )).toBeNull()
   })
 
-  it('连接工作区、选择模型、提交提示词并登记为 AgentDuel 对话', async () => {
+  it('通过 alpha 版工作区与模型服务创建优化会话', async () => {
+    const sessionId = 'session-alpha' as SessionId
+    const workspaceId = 'workspace-alpha' as WorkspaceId
+    const selection: ModelSelection = {
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      reasoningEffort: 'high'
+    }
+    const pickDirectory = vi.fn().mockResolvedValue('/workspace/alpha')
+    const connectWorkspace = vi.fn().mockResolvedValue(sessionId)
+    const create = vi.fn().mockResolvedValue({ workspaceId })
+    const load = vi.fn().mockResolvedValue({
+      current: selection,
+      routable: true,
+      groups: [{
+        id: 'deepseek',
+        name: 'DeepSeek',
+        models: [{ id: 'deepseek-chat', name: 'DeepSeek Chat' }]
+      }],
+      failures: []
+    })
+    const select = vi.fn().mockResolvedValue(undefined)
+    const directoryFor = vi.fn().mockReturnValue({ load, select })
+    const prompt = vi.fn().mockResolvedValue({ ok: true, value: { accepted: true } })
+    const open = vi.fn()
+    const ctx = {
+      uiWorkspace: { pickDirectory, connectWorkspace },
+      modelDirectories: { directoryFor },
+      workspaces: { create },
+      sessions: {
+        binding: () => ({ session: { prompt } }),
+        open
+      }
+    } as unknown as ClientContext
+    const service = createAgentConversationService(ctx)
+
+    expect(await service.chooseWorkspace()).toBe(workspaceId)
+    expect(pickDirectory).toHaveBeenCalledOnce()
+    expect(create).toHaveBeenCalledWith({ path: '/workspace/alpha' })
+
+    const prepared = await service.prepare(workspaceId)
+    expect(connectWorkspace).toHaveBeenCalledWith(workspaceId)
+    expect(directoryFor).toHaveBeenCalledWith(sessionId)
+    expect(load).toHaveBeenCalledOnce()
+    expect(prepared).toMatchObject({ workspaceId, sessionId, current: selection, routable: true })
+
+    await service.submit({
+      sessionId,
+      prompt: '分析对局并优化代码',
+      selection,
+      characterPublicId: 'character-alpha'
+    })
+    expect(select).toHaveBeenCalledWith(selection)
+    expect(prompt).toHaveBeenCalledWith([{ type: 'text', text: '分析对局并优化代码' }], 'queue')
+    expect(service.getSnapshot()).toEqual([
+      expect.objectContaining({
+        sessionId,
+        provider: selection.provider,
+        model: selection.model,
+        reasoningEffort: selection.reasoningEffort,
+        characterPublicId: 'character-alpha'
+      })
+    ])
+  })
+
+  it('使用 alpha.4 服务登记并维护 AgentDuel 对话', async () => {
     const storage = new Map<string, string>()
     Object.defineProperty(globalThis, 'localStorage', {
       configurable: true,
@@ -262,38 +335,28 @@ describe('AgentDuel 对话历史', () => {
     const connectWorkspace = vi.fn().mockResolvedValue(sessionId)
     const pickDirectory = vi.fn().mockResolvedValue('/workspace/agentduel')
     const create = vi.fn().mockResolvedValue({ workspaceId })
-    const selectModel = vi.fn().mockResolvedValue({
-      result: {
-        ok: true,
-        value: { selected: { provider: 'deepseek', model: 'deepseek-chat' } }
-      }
+    const load = vi.fn().mockResolvedValue({
+      current: { provider: 'deepseek', model: 'deepseek-chat' },
+      routable: true,
+      groups: [{
+        id: 'deepseek',
+        name: 'DeepSeek',
+        models: [{ id: 'deepseek-chat', name: 'DeepSeek Chat' }]
+      }],
+      failures: []
     })
-    const models = vi.fn().mockResolvedValue({
-      result: {
-        ok: true,
-        value: {
-          current: { provider: 'deepseek', model: 'deepseek-chat' },
-          routable: true,
-          groups: [{
-            id: 'deepseek',
-            name: 'DeepSeek',
-            models: [{ id: 'deepseek-chat', name: 'DeepSeek Chat' }]
-          }],
-          failures: []
-        }
-      }
-    })
+    const select = vi.fn().mockResolvedValue(undefined)
+    const directoryFor = vi.fn().mockReturnValue({ load, select })
     const ctx = {
-      workspaces: { connectWorkspace, create, pickDirectory },
+      uiWorkspace: { connectWorkspace, pickDirectory },
+      modelDirectories: { directoryFor },
+      workspaces: { create },
       sessions: {
         binding: () => ({ session: { prompt } }),
         open
       }
     } as unknown as ClientContext
-    const connection = {
-      api: { sessions: { models, selectModel } }
-    } as unknown as ConnectionHandle
-    const service = createAgentConversationService(ctx, connection)
+    const service = createAgentConversationService(ctx)
 
     expect(await service.chooseWorkspace()).toBe(workspaceId)
     expect(pickDirectory).toHaveBeenCalledOnce()
@@ -312,11 +375,7 @@ describe('AgentDuel 对话历史', () => {
     })
     service.open(sessionId)
 
-    expect(selectModel).toHaveBeenCalledWith({
-      sessionId,
-      provider: 'deepseek',
-      model: 'deepseek-chat'
-    })
+    expect(select).toHaveBeenCalledWith(selection)
     expect(prompt).toHaveBeenCalledWith([{ type: 'text', text: '分析对局并优化代码' }], 'queue')
     expect(service.getSnapshot()).toEqual([
       expect.objectContaining({

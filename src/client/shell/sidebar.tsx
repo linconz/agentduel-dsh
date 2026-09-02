@@ -7,7 +7,14 @@ import type { AgentDuelRoute } from './routes.js'
 
 type SidebarEntryProps = PropsRuntime<'sidebar.footer.action'> & AgentDuelInjected
 
-export function SidebarEntry({ wide, model, conversations, useSessions, useWorkspaces }: SidebarEntryProps): React.JSX.Element {
+export function SidebarEntry({
+  wide,
+  model,
+  conversations,
+  useSessions,
+  useSessionPendingInteraction,
+  useWorkspaces
+}: SidebarEntryProps): React.JSX.Element {
   const snapshot = useAgentDuel(model)
   const rootRef = useRef<HTMLDivElement>(null)
   const archivedSessionIds = useWorkspaces(state => state.archivedSessionIds)
@@ -95,6 +102,7 @@ export function SidebarEntry({ wide, model, conversations, useSessions, useWorks
               <AgentConversationHistory
                 service={conversations}
                 useSessions={useSessions}
+                useSessionPendingInteraction={useSessionPendingInteraction}
                 onOpen={(sessionId) => {
                   model.closePage()
                   conversations.open(sessionId)

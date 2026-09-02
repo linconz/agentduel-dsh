@@ -1,5 +1,7 @@
-import type { SessionFace } from '@deepseek-ai/dsh-client-runtime/client'
-import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
+import type { SessionFace } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { ObservableSnapshot } from '@deepseek-ai/dsh-client-store'
+import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { useSyncExternalStore } from 'react'
 import type { AgentConversationService } from '../conversations/service.js'
 import type { RecentBattlesCache } from '../battles/recent-battles-cache.js'
@@ -36,6 +38,7 @@ export interface AgentDuelInjected {
   ownedEntities: OwnedEntitiesCache
   recentBattles: RecentBattlesCache
   getSession: (sessionId: SessionId) => SessionFace | undefined
+  getChat: (sessionId: SessionId) => ObservableSnapshot<ChatSnapshot | undefined> | undefined
 }
 
 export function createAgentDuelModel(): AgentDuelModel {

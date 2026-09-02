@@ -1,11 +1,11 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type {
-  ConnectionHandle,
-  ModelProviderGroup,
-  ModelSelection,
-  SessionId,
-  WorkspaceId
-} from '@deepseek-ai/dsh-client-connection/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { ModelProviderGroup, ModelSelection } from '@deepseek-ai/dsh-api-session-controller/types'
+import type {} from '@deepseek-ai/dsh-api-session-controller/client'
+import type {} from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type {} from '@deepseek-ai/dsh-client-ui-model-selection/client'
+import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
 
 const CONVERSATION_STORAGE_KEY = 'agentduel.conversations.v1'
 const MAX_STORED_CONVERSATIONS = 100
@@ -50,8 +50,7 @@ export interface AgentConversationService {
 }
 
 export function createAgentConversationService(
-  ctx: ClientContext,
-  connection: ConnectionHandle
+  ctx: ClientContext
 ): AgentConversationService {
   let records = readStoredConversations()
   const listeners = new Set<() => void>()
@@ -103,34 +102,26 @@ export function createAgentConversationService(
       replaceRecords(records.filter(record => !archived.has(record.sessionId)))
     },
     chooseWorkspace: async () => {
-      const path = await ctx.workspaces.pickDirectory()
+      const path = await ctx.uiWorkspace.pickDirectory()
       if (path === null) return null
       const workspace = await ctx.workspaces.create({ path })
       return workspace.workspaceId
     },
     prepare: async (workspaceId) => {
-      const sessionId = await ctx.workspaces.connectWorkspace(workspaceId)
-      const response = await connection.api.sessions.models({ sessionId })
-      if (!response.result.ok) throw new Error(response.result.error.message)
+      const sessionId = await ctx.uiWorkspace.connectWorkspace(workspaceId)
+      const state = await ctx.modelDirectories.directoryFor(sessionId).load()
+      if (state.current === null) throw new Error('DSH 尚未准备好模型配置，请重试')
       return {
         workspaceId,
         sessionId,
-        current: response.result.value.current,
-        routable: response.result.value.routable,
-        groups: response.result.value.groups,
-        failures: response.result.value.failures
+        current: state.current,
+        routable: state.routable === true,
+        groups: state.groups,
+        failures: state.failures
       }
     },
     submit: async ({ sessionId, prompt, selection, characterPublicId, teamPublicId }) => {
-      const selected = await connection.api.sessions.selectModel({
-        sessionId,
-        provider: selection.provider,
-        model: selection.model,
-        ...(selection.reasoningEffort === undefined
-          ? {}
-          : { reasoningEffort: selection.reasoningEffort })
-      })
-      if (!selected.result.ok) throw new Error(selected.result.error.message)
+      await ctx.modelDirectories.directoryFor(sessionId).select(selection)
 
       const binding = ctx.sessions.binding(sessionId)
       if (binding === undefined) throw new Error('DSH 尚未准备好新对话，请重试')
@@ -140,14 +131,14 @@ export function createAgentConversationService(
       storeRecord({
         sessionId,
         prompt,
-        provider: selected.result.value.selected.provider,
-        model: selected.result.value.selected.model,
+        provider: selection.provider,
+        model: selection.model,
         source: 'agentduel-plugin',
         ...(characterPublicId === undefined ? {} : { characterPublicId }),
         ...(teamPublicId === undefined ? {} : { teamPublicId }),
-        ...(selected.result.value.selected.reasoningEffort === undefined
+        ...(selection.reasoningEffort === undefined
           ? {}
-          : { reasoningEffort: selected.result.value.selected.reasoningEffort }),
+          : { reasoningEffort: selection.reasoningEffort }),
         createdAt: Date.now()
       })
       return sessionId

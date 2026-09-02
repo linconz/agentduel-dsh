@@ -1,4 +1,4 @@
-import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { BattleNewPage } from '../battles/battle-new-page.js'
 import type { BattleMapsCache } from '../battles/battle-maps-cache.js'
