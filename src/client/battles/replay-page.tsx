@@ -28,7 +28,7 @@ import { battleReviewOptimization, type BattleReviewOptimization } from './revie
 import { refreshRecentBattlesAfterCompletedBattle, type RecentBattlesCache } from './recent-battles-cache.js'
 
 type ReplayPageProps = OwnedEntitiesPageProps
-  & Pick<PropsRuntime<'conversation'>, 'useSessions' | 'useWorkspaces'>
+  & Pick<PropsRuntime<'main.conversation'>, 'useSessions' | 'useWorkspaces'>
   & {
     conversations: AgentConversationService
     dashboardSummary: DashboardSummaryCache

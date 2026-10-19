@@ -10,7 +10,7 @@ import { AgentDuelFeaturePage } from './feature-router.js'
 import { useAgentDuel, type AgentDuelInjected } from './model.js'
 import type { AgentDuelFeatureRoute, AgentDuelPageNavigation, AgentDuelRoute } from './routes.js'
 
-type AgentDuelPageProps = PropsRuntime<'conversation'> & AgentDuelInjected
+type AgentDuelPageProps = PropsRuntime<'main.conversation'> & AgentDuelInjected
 
 export function AgentDuelPage({
   model,

@@ -50,7 +50,7 @@ const CHARACTER_CLASS_NAMES: Record<CharacterClassId, string> = {
 }
 
 type CharacterDetailPageProps = WriteDetailPageProps
-  & Pick<PropsRuntime<'conversation'>, 'useSessions' | 'useWorkspaces'>
+  & Pick<PropsRuntime<'main.conversation'>, 'useSessions' | 'useWorkspaces'>
   & {
     conversations: AgentConversationService
     highlightAgentOptimization: boolean

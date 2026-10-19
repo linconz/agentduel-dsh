@@ -1,7 +1,7 @@
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { useSyncExternalStore } from 'react'
-import { getConversationStatus, promptTitle } from './helpers.js'
+import { getConversationStatus, getCurrentSessionId, promptTitle } from './helpers.js'
 import type { AgentConversationRecord, AgentConversationService } from './service.js'
 
 export const MAX_DISPLAYED_AGENT_CONVERSATIONS = 5
@@ -14,7 +14,7 @@ export function getDisplayedAgentConversations(
 
 type AgentConversationHistoryProps = Pick<
   PropsRuntime<'sidebar.footer.action'>,
-  'useSessions' | 'useSessionPendingInteraction'
+  'useSessions' | 'useSessionStatus'
 > & {
   service: AgentConversationService
   onOpen: (sessionId: string) => void
@@ -23,21 +23,21 @@ type AgentConversationHistoryProps = Pick<
 export function AgentConversationHistory({
   service,
   useSessions,
-  useSessionPendingInteraction,
+  useSessionStatus,
   onOpen
 }: AgentConversationHistoryProps): React.JSX.Element | null {
   const records = useSyncExternalStore(service.subscribe, service.getSnapshot, service.getSnapshot)
-  const current = useSessions(state => state.current)
+  const current = useSessions(getCurrentSessionId)
   const summaries = useSessions(state => state.byId)
   const phase = useSessions(state => state.phase)
-  const pendingInteractions = useSessionPendingInteraction(state => state)
+  const sessionStatuses = useSessionStatus(state => state)
   if (records.length === 0) return null
 
   return (
     <div className="agentduel-conversation-list" aria-label="AgentDuel 对话历史">
       {getDisplayedAgentConversations(records).map((record) => {
         const summary = summaries[record.sessionId as SessionId]
-        const pendingInteraction = pendingInteractions.get(record.sessionId as SessionId)
+        const pendingInteraction = sessionStatuses.get(record.sessionId as SessionId)?.pendingInteraction
         const status = getConversationStatus(summary, pendingInteraction?.kind, phase !== 'ready')
         const title = summary?.title?.trim() || promptTitle(record.prompt)
         const selected = current === record.sessionId

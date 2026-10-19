@@ -60,7 +60,11 @@ This is where much of AgentDuel's appeal lies. What you submit is not a program 
 
 ## Installation
 
-This version targets DeepSeek Harness `dsh-v0.1.2-alpha.4` and later.
+This version targets DeepSeek Harness `0.2.1-rc.2`, with the compatibility range `^0.2.1-rc.2` (below `0.3.0`). DSH `0.1.x` is no longer supported.
+
+Version `0.1.6` fixes Desktop installation being rejected because `0.1.5` pinned DSH dependencies to `0.1.2-alpha.4`. It also adapts page slots, Session navigation, Session reference lifetimes, and interaction status to the new interfaces.
+
+In the official Desktop client, install `@agentduel/agentduel-dsh@0.1.6` from plugin management. Command-line installation is shown below.
 
 Install from source
 
@@ -75,7 +79,7 @@ dsh plugin --profile web add .
 Install from the npm registry
 
 ```bash
-dsh plugin --profile web install @agentduel/agentduel-dsh@0.1.5
+dsh plugin --profile web add @agentduel/agentduel-dsh@0.1.6
 ```
 
 Start DSH

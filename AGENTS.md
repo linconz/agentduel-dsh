@@ -51,7 +51,7 @@ src/
 
 ### `shell/`
 
-- `plugin.tsx`：注册 `sidebar.footer.action`、`shell.overlay`、`conversation` 三个 slot，并把依赖注入到页面。
+- `plugin.tsx`：注册 `sidebar.footer.action`、`shell.overlay`、`main.conversation` 三个 slot，并把依赖注入到页面。
 - `model.ts`：维护侧边栏展开状态、当前 `AgentDuelRoute`、App Key 和页面开关。
 - `sidebar.tsx`：插件菜单和最近的 Agent 优化会话。
 - `page-host.tsx`：App Key、公开观战、会话编辑器和业务页面的顶层分流；承载唯一的 Turnstile 容器。

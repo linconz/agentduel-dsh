@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { SessionListState, SessionSummary } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { ModelCatalogModel, ModelSelection } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { PreparedAgentConversation } from './service.js'
 
@@ -8,6 +8,10 @@ export const TASK_PROMPTS = {
 } as const
 
 export type AgentTaskKind = keyof typeof TASK_PROMPTS
+
+export function getCurrentSessionId(state: Pick<SessionListState, 'byId'>): SessionSummary['id'] | undefined {
+  return Object.values(state.byId).find(session => (session.retainedBy.mainView ?? 0) > 0)?.id
+}
 
 export interface SelectableModel {
   provider: string

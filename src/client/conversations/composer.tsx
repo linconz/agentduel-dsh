@@ -6,12 +6,13 @@ import {
   TASK_PROMPTS,
   errorMessage,
   flattenModels,
+  getCurrentSessionId,
   modelSelectionKey,
   type AgentTaskKind
 } from './helpers.js'
 import type { AgentConversationService, PreparedAgentConversation } from './service.js'
 
-type AgentConversationComposerProps = Pick<PropsRuntime<'conversation'>, 'useSessions' | 'useWorkspaces'> & {
+type AgentConversationComposerProps = Pick<PropsRuntime<'main.conversation'>, 'useSessions' | 'useWorkspaces'> & {
   service: AgentConversationService
   onSubmitted: (sessionId: SessionId) => void
 }
@@ -24,7 +25,7 @@ export function AgentConversationComposer({
 }: AgentConversationComposerProps): React.JSX.Element {
   const workspaces = useWorkspaces(state => state.items)
   const workspaceState = useWorkspaces(state => state.state)
-  const currentSessionId = useSessions(state => state.current)
+  const currentSessionId = useSessions(getCurrentSessionId)
   const [workspaceId, setWorkspaceId] = useState<string>('')
   const [taskKind, setTaskKind] = useState<AgentTaskKind>('optimize')
   const [prompt, setPrompt] = useState<string>(TASK_PROMPTS.optimize)

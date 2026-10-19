@@ -12,7 +12,7 @@ export function SidebarEntry({
   model,
   conversations,
   useSessions,
-  useSessionPendingInteraction,
+  useSessionStatus,
   useWorkspaces
 }: SidebarEntryProps): React.JSX.Element {
   const snapshot = useAgentDuel(model)
@@ -102,7 +102,7 @@ export function SidebarEntry({
               <AgentConversationHistory
                 service={conversations}
                 useSessions={useSessions}
-                useSessionPendingInteraction={useSessionPendingInteraction}
+                useSessionStatus={useSessionStatus}
                 onOpen={(sessionId) => {
                   model.closePage()
                   conversations.open(sessionId)

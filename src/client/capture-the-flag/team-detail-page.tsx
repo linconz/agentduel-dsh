@@ -43,7 +43,7 @@ interface TeamDetailData {
 }
 
 type TeamDetailPageProps = WriteDetailPageProps
-  & Pick<PropsRuntime<'conversation'>, 'useSessions' | 'useWorkspaces'>
+  & Pick<PropsRuntime<'main.conversation'>, 'useSessions' | 'useWorkspaces'>
   & {
     conversations: AgentConversationService
     onConversationSubmitted: (sessionId: SessionId) => void

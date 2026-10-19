@@ -10,6 +10,12 @@ import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
 const CONVERSATION_STORAGE_KEY = 'agentduel.conversations.v1'
 const MAX_STORED_CONVERSATIONS = 100
 
+declare module '@deepseek-ai/dsh-api-session-controller/client' {
+  interface SessionReferenceSourceMap {
+    agentDuelConversation: unknown
+  }
+}
+
 export interface AgentConversationRecord {
   sessionId: string
   prompt: string
@@ -109,24 +115,25 @@ export function createAgentConversationService(
     },
     prepare: async (workspaceId) => {
       const sessionId = await ctx.uiWorkspace.connectWorkspace(workspaceId)
-      const state = await ctx.modelDirectories.directoryFor(sessionId).load()
-      if (state.current === null) throw new Error('DSH 尚未准备好模型配置，请重试')
-      return {
-        workspaceId,
-        sessionId,
-        current: state.current,
-        routable: state.routable === true,
-        groups: state.groups,
-        failures: state.failures
-      }
+      return ctx.sessions.using(sessionId, { source: 'agentDuelConversation' }, async () => {
+        const state = await ctx.modelDirectories.directoryFor(sessionId).load()
+        if (state.current === null) throw new Error('DSH 尚未准备好模型配置，请重试')
+        return {
+          workspaceId,
+          sessionId,
+          current: state.current,
+          routable: state.routable === true,
+          groups: state.groups,
+          failures: state.failures
+        }
+      })
     },
     submit: async ({ sessionId, prompt, selection, characterPublicId, teamPublicId }) => {
-      await ctx.modelDirectories.directoryFor(sessionId).select(selection)
-
-      const binding = ctx.sessions.binding(sessionId)
-      if (binding === undefined) throw new Error('DSH 尚未准备好新对话，请重试')
-      const accepted = await binding.session.prompt([{ type: 'text', text: prompt }], 'queue')
-      if (!accepted.ok) throw new Error(accepted.error.message)
+      await ctx.sessions.using(sessionId, { source: 'agentDuelConversation' }, async (reference) => {
+        await ctx.modelDirectories.directoryFor(sessionId).select(selection)
+        const accepted = await reference.binding.session.prompt([{ type: 'text', text: prompt }], 'queue')
+        if (!accepted.ok) throw new Error(accepted.error.message)
+      })
 
       storeRecord({
         sessionId,
@@ -143,7 +150,7 @@ export function createAgentConversationService(
       })
       return sessionId
     },
-    open: (sessionId) => ctx.sessions.open(sessionId as SessionId)
+    open: (sessionId) => ctx.uiWorkspace.openSession(sessionId as SessionId)
   }
 }
 

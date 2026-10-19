@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type { SessionSnapshot, SessionSummary } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { ISessions, SessionListState, SessionReference, SessionSnapshot, SessionSummary } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { ModelSelection } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
@@ -13,7 +13,7 @@ import {
   canOfferBattleFromConversation,
   didLatestTurnCompleteNormally
 } from './completion.js'
-import { getConversationStatus, promptTitle } from './helpers.js'
+import { getConversationStatus, getCurrentSessionId, promptTitle } from './helpers.js'
 import {
   getDisplayedAgentConversations,
   MAX_DISPLAYED_AGENT_CONVERSATIONS
@@ -28,6 +28,19 @@ afterEach(() => {
 })
 
 describe('AgentDuel 对话历史', () => {
+  it('通过主视图引用识别当前会话，忽略后台会话引用', () => {
+    const background = 'session-background' as SessionId
+    const current = 'session-current' as SessionId
+    const byId = {
+      [background]: { id: background, retainedBy: { agentDuelConversation: 1 } },
+      [current]: { id: current, retainedBy: { mainView: 1 } }
+    } as SessionListState['byId']
+
+    expect(getCurrentSessionId({ byId })).toBe(current)
+    expect(getCurrentSessionId({ byId: { [background]: byId[background] } })).toBeUndefined()
+    expect(getCurrentSessionId({ byId: {} })).toBeUndefined()
+  })
+
   const conversationWithTurnEndReason = (
     kind: 'completed' | 'aborted' | 'error' | 'max-tokens',
     running = false
@@ -253,7 +266,7 @@ describe('AgentDuel 对话历史', () => {
     )).toBeNull()
   })
 
-  it('通过 alpha 版工作区与模型服务创建优化会话', async () => {
+  it('通过新版工作区与模型服务创建优化会话，并在操作期间保留会话引用', async () => {
     const sessionId = 'session-alpha' as SessionId
     const workspaceId = 'workspace-alpha' as WorkspaceId
     const selection: ModelSelection = {
@@ -278,14 +291,14 @@ describe('AgentDuel 对话历史', () => {
     const directoryFor = vi.fn().mockReturnValue({ load, select })
     const prompt = vi.fn().mockResolvedValue({ ok: true, value: { accepted: true } })
     const open = vi.fn()
+    const using = vi.fn<ISessions['using']>(async (_target, _options, operation) => {
+      return operation({ binding: { session: { prompt } } } as unknown as SessionReference)
+    })
     const ctx = {
-      uiWorkspace: { pickDirectory, connectWorkspace },
+      uiWorkspace: { pickDirectory, connectWorkspace, openSession: open },
       modelDirectories: { directoryFor },
       workspaces: { create },
-      sessions: {
-        binding: () => ({ session: { prompt } }),
-        open
-      }
+      sessions: { using }
     } as unknown as ClientContext
     const service = createAgentConversationService(ctx)
 
@@ -298,6 +311,7 @@ describe('AgentDuel 对话历史', () => {
     expect(directoryFor).toHaveBeenCalledWith(sessionId)
     expect(load).toHaveBeenCalledOnce()
     expect(prepared).toMatchObject({ workspaceId, sessionId, current: selection, routable: true })
+    expect(using).toHaveBeenCalledWith(sessionId, { source: 'agentDuelConversation' }, expect.any(Function))
 
     await service.submit({
       sessionId,
@@ -307,6 +321,7 @@ describe('AgentDuel 对话历史', () => {
     })
     expect(select).toHaveBeenCalledWith(selection)
     expect(prompt).toHaveBeenCalledWith([{ type: 'text', text: '分析对局并优化代码' }], 'queue')
+    expect(using).toHaveBeenCalledTimes(2)
     expect(service.getSnapshot()).toEqual([
       expect.objectContaining({
         sessionId,
@@ -318,7 +333,28 @@ describe('AgentDuel 对话历史', () => {
     ])
   })
 
-  it('使用 alpha.4 服务登记并维护 AgentDuel 对话', async () => {
+  it('提交失败时保留原始错误且不写入对话历史', async () => {
+    const sessionId = 'session-rejected' as SessionId
+    const prompt = vi.fn().mockResolvedValue({ ok: false, error: { message: '会话已停止' } })
+    const select = vi.fn().mockResolvedValue(undefined)
+    const using = vi.fn<ISessions['using']>(async (_target, _options, operation) => {
+      return operation({ binding: { session: { prompt } } } as unknown as SessionReference)
+    })
+    const service = createAgentConversationService({
+      modelDirectories: { directoryFor: () => ({ select }) },
+      sessions: { using }
+    } as unknown as ClientContext)
+
+    await expect(service.submit({
+      sessionId,
+      prompt: '优化代码',
+      selection: { provider: 'deepseek', model: 'deepseek-chat' }
+    })).rejects.toThrow('会话已停止')
+    expect(using).toHaveBeenCalledWith(sessionId, { source: 'agentDuelConversation' }, expect.any(Function))
+    expect(service.getSnapshot()).toEqual([])
+  })
+
+  it('使用新版工作区导航登记并维护 AgentDuel 对话', async () => {
     const storage = new Map<string, string>()
     Object.defineProperty(globalThis, 'localStorage', {
       configurable: true,
@@ -347,14 +383,14 @@ describe('AgentDuel 对话历史', () => {
     })
     const select = vi.fn().mockResolvedValue(undefined)
     const directoryFor = vi.fn().mockReturnValue({ load, select })
+    const using = vi.fn<ISessions['using']>(async (_target, _options, operation) => {
+      return operation({ binding: { session: { prompt } } } as unknown as SessionReference)
+    })
     const ctx = {
-      uiWorkspace: { connectWorkspace, pickDirectory },
+      uiWorkspace: { connectWorkspace, pickDirectory, openSession: open },
       modelDirectories: { directoryFor },
       workspaces: { create },
-      sessions: {
-        binding: () => ({ session: { prompt } }),
-        open
-      }
+      sessions: { using }
     } as unknown as ClientContext
     const service = createAgentConversationService(ctx)
 

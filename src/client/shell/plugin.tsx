@@ -23,7 +23,7 @@ import { SidebarEntry } from './sidebar.js'
 
 export const inject = [
   'slots', 'sessions', 'workspaces', 'uiSession', 'uiConversation', 'uiWorkspace',
-  'modelDirectories', 'remote', 'remote.session'
+  'modelDirectories', 'remote', 'remote.session', 'layout'
 ]
 
 export function apply(ctx: ClientContext): void {
@@ -56,7 +56,10 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => conversations.bindStorage(), 'agentduel: conversation storage')
   ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({ name: 'sidebar.footer.action', id: 'agentduel', order: 10, inject: injectModel }, SidebarEntry))
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({ name: 'shell.overlay', id: 'agentduel-battle-link-bridge', inject: injectModel }, ConversationBattleLinkBridge))
-  ctx.slots.inject('conversation', () => model.bindPage(() => ctx.slots.register({ name: 'conversation', priority: -10, inject: injectModel }, AgentDuelPage)))
+  ctx.slots.inject('main.conversation', () => model.bindPage(() => {
+    ctx.layout.selectPanel(null)
+    return ctx.slots.register({ name: 'main.conversation', priority: -10, inject: injectModel }, AgentDuelPage)
+  }))
 }
 
 function installStyles(ctx: ClientContext): void {

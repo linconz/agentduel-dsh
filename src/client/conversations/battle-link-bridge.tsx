@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { useAgentDuel, type AgentDuelInjected } from '../shell/model.js'
 import { getConversationBattleSearch, getRecordedConversationBattleSearch } from './battle-links.js'
 import { canOfferBattleFromConversation } from './completion.js'
+import { getCurrentSessionId } from './helpers.js'
 
 type ConversationBattleLinkBridgeProps = PropsRuntime<'shell.overlay'> & AgentDuelInjected
 
@@ -16,7 +17,7 @@ export function ConversationBattleLinkBridge({
   useSessions
 }: ConversationBattleLinkBridgeProps): React.JSX.Element | null {
   const agentDuelSnapshot = useAgentDuel(model)
-  const currentSessionId = useSessions(state => state.current)
+  const currentSessionId = useSessions(getCurrentSessionId)
   const currentSession = currentSessionId === undefined ? undefined : getSession(currentSessionId)
   const currentChat = currentSessionId === undefined ? undefined : getChat(currentSessionId)
   const subscribeCurrentSession = useCallback(

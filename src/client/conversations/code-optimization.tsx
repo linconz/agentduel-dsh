@@ -3,14 +3,14 @@ import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { errorMessage, flattenModels, modelSelectionKey } from './helpers.js'
+import { errorMessage, flattenModels, getCurrentSessionId, modelSelectionKey } from './helpers.js'
 import type { AgentConversationService, PreparedAgentConversation } from './service.js'
 
 export type AgentOptimizationResource =
   | { kind: 'character'; publicId: string }
   | { kind: 'team'; publicId: string }
 
-type AgentCodeOptimizationProps = Pick<PropsRuntime<'conversation'>, 'useSessions' | 'useWorkspaces'> & {
+type AgentCodeOptimizationProps = Pick<PropsRuntime<'main.conversation'>, 'useSessions' | 'useWorkspaces'> & {
   highlight?: boolean
   resource: AgentOptimizationResource
   initialPrompt: string
@@ -61,7 +61,7 @@ export function AgentCodeOptimization({
   const sectionRef = useRef<HTMLDivElement>(null)
   const workspaces = useWorkspaces(state => state.items)
   const workspaceState = useWorkspaces(state => state.state)
-  const currentSessionId = useSessions(state => state.current)
+  const currentSessionId = useSessions(getCurrentSessionId)
   const [prompt, setPrompt] = useState(initialPrompt)
   const [prepared, setPrepared] = useState<PreparedAgentConversation | null>(null)
   const [modelKey, setModelKey] = useState('')

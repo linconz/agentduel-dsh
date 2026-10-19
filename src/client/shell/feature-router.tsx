@@ -36,7 +36,7 @@ export function AgentDuelFeaturePage({
   useSessions,
   useWorkspaces,
   onOptimizationHighlightComplete
-}: Pick<PropsRuntime<'conversation'>, 'useSessions' | 'useWorkspaces'> & {
+}: Pick<PropsRuntime<'main.conversation'>, 'useSessions' | 'useWorkspaces'> & {
   appKey: string
   battleMaps: BattleMapsCache
   conversations: AgentConversationService
